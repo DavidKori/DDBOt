@@ -101,44 +101,6 @@
                 } catch(e) {}
             })();
         </script>
-        <!-- Debug error catcher -->
-        <script>
-            // Show a visible marker immediately so we know HTML executes
-            var debugDiv = document.createElement('div');
-            debugDiv.id = 'debug-marker';
-            debugDiv.style.cssText = 'position:fixed;top:0;left:0;z-index:99999;background:yellow;color:black;font-size:14px;padding:8px;font-family:monospace;max-width:100vw;overflow-wrap:break-word;';
-            debugDiv.textContent = 'HTML loaded. Waiting for React...';
-            document.body.appendChild(debugDiv);
-
-            var errors = [];
-            window.addEventListener('error', function(e) {
-                console.error('[GLOBAL ERROR]', e.message, e.filename, e.lineno, e.error);
-                errors.push('ERROR: ' + e.message + ' @ ' + (e.filename||'').split('/').pop() + ':' + e.lineno);
-                debugDiv.style.background = 'red';
-                debugDiv.style.color = 'white';
-                debugDiv.innerHTML = errors.map(function(s){return '<div>'+s+'</div>'}).join('');
-            });
-            window.addEventListener('unhandledrejection', function(e) {
-                console.error('[UNHANDLED REJECTION]', e.reason);
-                var msg = e.reason && e.reason.message ? e.reason.message : String(e.reason);
-                errors.push('REJECTION: ' + msg);
-                debugDiv.style.background = 'orange';
-                debugDiv.innerHTML = errors.map(function(s){return '<div>'+s+'</div>'}).join('');
-            });
-
-            // Check if React mounted after 3 seconds
-            setTimeout(function() {
-                var root = document.getElementById('root');
-                if (!root || root.children.length === 0) {
-                    debugDiv.style.background = 'red';
-                    debugDiv.style.color = 'white';
-                    debugDiv.textContent = 'React did NOT mount after 3s. Root is empty. Errors: ' + errors.join('; ');
-                } else {
-                    debugDiv.textContent = 'React mounted OK. Root children: ' + root.children.length;
-                    debugDiv.style.background = 'lime';
-                }
-            }, 3000);
-        </script>
         <!-- Browser Service Worker Prevention -->
         <script>
             // Check browser compatibility and prevent service worker issues

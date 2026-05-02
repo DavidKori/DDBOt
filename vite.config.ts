@@ -137,6 +137,12 @@ export default defineConfig({
             'Cross-Origin-Embedder-Policy': 'unsafe-none',
             'Cache-Control': 'no-cache',
         },
+        proxy: {
+            '/api': {
+                target: 'http://localhost:3001',
+                changeOrigin: true,
+            },
+        },
     },
     publicDir: 'public',
 });
