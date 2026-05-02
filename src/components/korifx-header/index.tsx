@@ -38,7 +38,7 @@ const KoriFxHeader = () => {
             <div className='korifx-header__right'>
                 <a
                     className='korifx-header__social korifx-header__social--telegram'
-                    href='https://t.me/korifx'
+                    href='https://t.me/+KxePNFcYuXs4OWM0'
                     target='_blank'
                     rel='noopener noreferrer'
                     title='Telegram'
@@ -47,16 +47,16 @@ const KoriFxHeader = () => {
                 </a>
                 <a
                     className='korifx-header__social korifx-header__social--whatsapp'
-                    href='https://wa.me/korifx'
+                    href='https://whatsapp.com/channel/0029Vb8AVrb2f3EOglunci0X'
                     target='_blank'
                     rel='noopener noreferrer'
-                    title='WhatsApp'
+                    title='WhatsApp Channel'
                 >
                     <WhatsAppIcon />
                 </a>
                 <a
                     className='korifx-header__social korifx-header__social--youtube'
-                    href='https://youtube.com/@korifx'
+                    href='https://youtube.com/@korifx-1?si=cTYJgEKMhGmUfm_B'
                     target='_blank'
                     rel='noopener noreferrer'
                     title='YouTube'

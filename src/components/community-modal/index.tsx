@@ -7,13 +7,16 @@ const CommunityModal = () => {
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
-        if (!localStorage.getItem(STORAGE_KEY)) {
+        // Use sessionStorage so the modal reappears on every new browser session
+        if (!sessionStorage.getItem(STORAGE_KEY)) {
             setVisible(true);
         }
     }, []);
 
     const dismiss = () => {
-        localStorage.setItem(STORAGE_KEY, '1');
+        sessionStorage.setItem(STORAGE_KEY, '1');
+        // Also clear old localStorage key if present
+        localStorage.removeItem(STORAGE_KEY);
         setVisible(false);
     };
 
@@ -28,13 +31,13 @@ const CommunityModal = () => {
                 <div className='community-modal__icon'>🚀</div>
                 <h2 className='community-modal__title'>Join the KoriFx Community</h2>
                 <p className='community-modal__sub'>
-                    Get signals, bot updates & live trading discussions with fellow traders.
+                    Get signals, bot updates &amp; live trading discussions with fellow traders.
                 </p>
 
                 <div className='community-modal__buttons'>
                     <a
                         className='community-modal__btn community-modal__btn--telegram'
-                        href='https://t.me/korifx'
+                        href='https://t.me/+KxePNFcYuXs4OWM0'
                         target='_blank'
                         rel='noopener noreferrer'
                         onClick={dismiss}
@@ -47,7 +50,7 @@ const CommunityModal = () => {
 
                     <a
                         className='community-modal__btn community-modal__btn--whatsapp'
-                        href='https://wa.me/korifx'
+                        href='https://whatsapp.com/channel/0029Vb8AVrb2f3EOglunci0X'
                         target='_blank'
                         rel='noopener noreferrer'
                         onClick={dismiss}
@@ -60,7 +63,7 @@ const CommunityModal = () => {
 
                     <a
                         className='community-modal__btn community-modal__btn--youtube'
-                        href='https://youtube.com/@korifx'
+                        href='https://youtube.com/@korifx-1?si=cTYJgEKMhGmUfm_B'
                         target='_blank'
                         rel='noopener noreferrer'
                         onClick={dismiss}
