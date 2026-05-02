@@ -98,14 +98,22 @@ const useTMB = (): UseTMBReturn => {
                     console.log('Using config.server_url:', sessionsUrl);
                 }
 
-                const response = await fetch(sessionsUrl, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                });
+                const controller1 = new AbortController();
+                const timeout1 = setTimeout(() => controller1.abort(), 5000);
+                let response: Response;
+                try {
+                    response = await fetch(sessionsUrl, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        signal: controller1.signal,
+                    });
+                } finally {
+                    clearTimeout(timeout1);
+                }
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -124,20 +132,28 @@ const useTMB = (): UseTMBReturn => {
                 sessionsUrl = 'https://oauth.deriv.be/oauth2/sessions/active';
             }
 
-            const response = await fetch(sessionsUrl, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            const controller2 = new AbortController();
+            const timeout2 = setTimeout(() => controller2.abort(), 5000);
+            let response2: Response;
+            try {
+                response2 = await fetch(sessionsUrl, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    signal: controller2.signal,
+                });
+            } finally {
+                clearTimeout(timeout2);
             }
 
-            const result = await response.json();
+            if (!response2.ok) {
+                throw new Error(`HTTP ${response2.status}: ${response2.statusText}`);
+            }
+
+            const result = await response2.json();
             return result as TMBWebsocketTokens;
         } catch (error) {
             console.error('Failed to get active sessions:', error);
@@ -201,8 +217,15 @@ const useTMB = (): UseTMBReturn => {
                 const url = is_staging
                     ? 'https://app-config-staging.firebaseio.com/remote_config/oauth/is_tmb_enabled.json'
                     : 'https://app-config-prod.firebaseio.com/remote_config/oauth/is_tmb_enabled.json';
-                const response = await fetch(url);
-                const result = await response.json();
+                const firebaseController = new AbortController();
+                const firebaseTimeout = setTimeout(() => firebaseController.abort(), 3000);
+                let firebaseResponse: Response;
+                try {
+                    firebaseResponse = await fetch(url, { signal: firebaseController.signal });
+                } finally {
+                    clearTimeout(firebaseTimeout);
+                }
+                const result = await firebaseResponse.json();
 
                 const isEnabled = !!result.dbot;
 

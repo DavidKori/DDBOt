@@ -42,7 +42,7 @@ const Layout = observer(() => {
         currency === 'demo' ||
         currency === '';
     const [clientHasCurrency, setClientHasCurrency] = useState(ifClientAccountHasCurrency);
-    const [isAuthenticating, setIsAuthenticating] = useState(true); // Start with true to prevent flashing
+    const [isAuthenticating, setIsAuthenticating] = useState(false);
 
     // Expose setClientHasCurrency to window for global access
     useEffect(() => {

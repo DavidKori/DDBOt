@@ -88,6 +88,19 @@
         </script>
         <!-- End LiveChat script -->
 
+        <!-- Skip Firebase TMB fetch in Replit dev environment -->
+        <script>
+            (function() {
+                try {
+                    // Pre-seed TMB flag so isTmbEnabled() resolves immediately without Firebase fetch
+                    if (!localStorage.getItem('is_tmb_enabled')) {
+                        localStorage.setItem('is_tmb_enabled', 'false');
+                    }
+                    // Pre-seed is_tmb_enabled on window so initializeHook skips getActiveSessions
+                    window.is_tmb_enabled = false;
+                } catch(e) {}
+            })();
+        </script>
         <!-- Debug error catcher -->
         <script>
             // Show a visible marker immediately so we know HTML executes

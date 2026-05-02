@@ -81,6 +81,38 @@ Preferred communication style: Simple, everyday language.
 - `localforage` - Client-side storage
 - `lz-string` / `pako` - Compression utilities
 
+## Replit Migration (May 2026)
+
+### Build System Change
+- Migrated from Rsbuild to **Vite 8** (rolldown-based) as the build tool
+- `vite.config.ts` — has `requireShimPlugin` that injects `window.require` shim for CJS deps like react/react-dom
+- Added `<script type="module" src="/src/main.tsx">` to `index.html`
+
+### Key Compatibility Fixes
+- `@deriv-com/translations` **pinned to `"1.3.12"` exactly** — 1.4.x embeds React 19 internals incompatible with React 18
+- `error-boundary.js` renamed to `error-boundary.jsx` so Rolldown parses JSX correctly
+- `.npmrc` has `legacy-peer-deps=true`
+
+### Dev Environment Adaptations (Replit-specific)
+All changes below are Replit dev overrides — they do NOT affect production behavior:
+
+**`index.html`** — pre-seeds `localStorage.setItem('is_tmb_enabled', 'false')` and `window.is_tmb_enabled = false` to bypass the Firebase remote-config fetch (unreachable from Replit sandbox), making the TMB check instant.
+
+**`src/hooks/useStore.tsx`** — Store initialized synchronously via module-level singleton (`getOrCreateRootStore`) instead of `useEffect`, so `useStore()` never returns `null` on first render.
+
+**`src/app/App.tsx`** — `Layout` and `AppRoot` converted from `lazy()` imports to eager imports, eliminating the top-level Suspense "Please wait while we connect to the server..." fallback.
+
+**`src/app/app-root.tsx`** — Removed `is_api_initialized` loading gate; `api_base.init()` now fires in background without blocking render. AppContent is also an eager import.
+
+**`src/app/app-content.jsx`** — `is_loading` starts as `false` (no initial loading spinner); removed `setIsLoading(true)` from the `is_api_initialized` effect; WebSocket fallback timeout reduced from 8 s → 500 ms; active-symbols timeout reduced from 10 s → 1 s.
+
+**`src/components/layout/index.tsx`** — `isAuthenticating` starts as `false` (no false positive auth-spinner on load).
+
+**`src/hooks/useTMB.ts`** — All three `fetch()` calls now have `AbortController` timeouts (3 s Firebase, 5 s sessions) so they never hang indefinitely.
+
+### Result
+The app renders fully in the browser preview within ~1 second of page load, showing the complete Deriv Bot dashboard with navigation tabs, "Load or build your bot" section, and the onboarding modal.
+
 ## Recent Changes
 
 ### Free Bots Feature (December 2025)

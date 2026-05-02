@@ -34,7 +34,7 @@ import '../components/bot-notification/bot-notification.scss';
 
 const AppContent = observer(() => {
     const [is_api_initialized, setIsApiInitialized] = React.useState(false);
-    const [is_loading, setIsLoading] = React.useState(true);
+    const [is_loading, setIsLoading] = React.useState(false);
     const [is_eu_error_loading, setIsEuErrorLoading] = React.useState(false);
     const [offline_timeout, setOfflineTimeout] = React.useState(null);
     const store = useStore();
@@ -82,7 +82,7 @@ const AppContent = observer(() => {
         }
     }, [common, connectionStatus, offline_timeout]);
 
-    // Fallback: force API initialization after 8 seconds even if WebSocket never opens
+    // Fallback: force API initialization after 500ms even if WebSocket never opens
     useEffect(() => {
         const fallbackTimeout = setTimeout(() => {
             setIsApiInitialized(prev => {
@@ -92,7 +92,7 @@ const AppContent = observer(() => {
                 }
                 return prev;
             });
-        }, 8000);
+        }, 500);
         return () => clearTimeout(fallbackTimeout);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -254,14 +254,13 @@ const AppContent = observer(() => {
                     console.log('[Timeout] Active symbols loading timeout, showing dashboard');
                     setIsLoading(false);
                 }
-            }, 10000); // 10 second timeout
+            }, 1000); // 1 second timeout
         }
     };
 
     React.useEffect(() => {
         if (is_api_initialized) {
             init();
-            setIsLoading(true);
             if (!client.is_logged_in) {
                 changeActiveSymbolLoadingState();
             }

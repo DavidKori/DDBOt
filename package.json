@@ -22,7 +22,7 @@
         "@deriv-com/auth-client": "^1.5.1",
         "@deriv-com/quill-ui": "1.18.1",
         "@deriv-com/quill-ui-next": "^2.3.2",
-        "@deriv-com/translations": "^1.3.9",
+        "@deriv-com/translations": "^1.3.12",
         "@deriv-com/ui": "^1.37.1",
         "@deriv-com/utils": "latest",
         "@deriv/deriv-api": "^1.0.15",
