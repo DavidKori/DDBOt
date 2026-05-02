@@ -2,7 +2,7 @@
 
 ## Overview
 
-Deriv Bot is a web-based automated trading platform that allows users to create trading bots without coding. The application uses a visual block-based programming interface (powered by Blockly) to let users design trading strategies. Users can build bots from scratch, use quick strategies, or import existing bot configurations. The platform supports both demo and real trading accounts through the Deriv trading API.
+Deriv Bot, rebranded as KoriFx, is a web-based automated trading platform designed to allow users to create trading bots without coding. It utilizes a visual block-based programming interface (Blockly) to enable users to design, build from scratch, or import trading strategies. The platform integrates with the Deriv trading API for both demo and real trading accounts, providing real-time market data and order execution. KoriFx aims to provide an AI-powered trading automation experience, complete with community engagement features and an intuitive user interface.
 
 ## User Preferences
 
@@ -10,206 +10,54 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend Framework
-- **React 18** with TypeScript as the primary UI framework
-- **MobX** for state management across the application
-- Stores are organized in `src/stores/` with a root store pattern that aggregates domain-specific stores (client, dashboard, chart, run-panel, etc.)
+### Frontend
+- **Framework**: React 18 with TypeScript.
+- **State Management**: MobX, using a root store pattern for centralized state.
+- **UI/UX**: KoriFx branding with a dark theme, featuring cyan, purple, and neon green accents. Includes a custom animated loading screen, a community modal, and a persistent branded header with social links and a "Sign Up Free" CTA.
+- **Charting**: `@deriv/deriv-charts` for market data visualization, with real-time updates during bot execution.
+- **Visual Programming**: Blockly library for drag-and-drop bot strategy creation, with custom blocks for trading operations.
+- **Internationalization**: `@deriv-com/translations` for multi-language support, loaded via CDN.
+- **PWA Support**: Service worker for offline capabilities and installability.
+
+### Backend & Integrations
+- **Trading API**: `@deriv/deriv-api` for WebSocket-based communication with Deriv trading servers.
+- **Authentication**: OAuth2-based flow with OIDC support, integrating with a Token Management Backend (TMB) and supporting multiple accounts.
+- **Tick Collection**: A WebSocket collector service gathers real-time tick data for various markets, storing it in MongoDB Atlas.
 
 ### Build System
-- **Rsbuild** as the primary build tool (modern, fast bundler)
-- Webpack configuration available as fallback
-- Babel for transpilation with support for decorators and class properties
+- **Bundler**: Vite 8 (rolldown-based).
+- **Transpilation**: Babel, supporting decorators and class properties.
 
-### Visual Programming
-- **Blockly** library for the drag-and-drop bot building interface
-- Custom blocks and toolbox configurations for trading-specific operations
-- Workspace serialization for saving/loading bot strategies
-
-### Trading Integration
-- **@deriv/deriv-api** for WebSocket-based communication with Deriv trading servers
-- Real-time market data streaming and order execution
-- Support for multiple account types (demo, real, wallet-based)
-
-### Authentication
-- OAuth2-based authentication flow with OIDC support
-- Token Management Backend (TMB) integration for enhanced session handling
-- Multi-account support with account switching capabilities
-
-### Charting
-- **@deriv/deriv-charts** for displaying market data and trade visualizations
-- Real-time chart updates during bot execution
-
-### PWA Support
-- Service worker for offline capabilities
-- Installable as a Progressive Web App on mobile devices
-- Offline fallback page
-
-### Internationalization
-- **@deriv-com/translations** for multi-language support
-- CDN-based translation loading with Crowdin integration
-
-### Analytics & Monitoring
-- **RudderStack** for event tracking and analytics
-- **Datadog** for session replay and performance monitoring
-- **TrackJS** for error tracking in production
+### System Design Choices
+- **Modularity**: Stores are organized in `src/stores/`, promoting a clear separation of concerns.
+- **Performance**: Optimized rendering with eager imports for critical components and reduced loading timeouts.
+- **Error Handling**: Enhanced error tracking with TrackJS and robust error boundary implementations.
 
 ## External Dependencies
 
 ### Deriv Ecosystem Packages
-- `@deriv-com/auth-client` - Authentication client
-- `@deriv-com/analytics` - Analytics integration
-- `@deriv-com/quill-ui` / `@deriv-com/quill-ui-next` - UI component library
-- `@deriv-com/translations` - Internationalization
-- `@deriv/deriv-api` - Trading API client
-- `@deriv/deriv-charts` - Charting library
+- `@deriv-com/auth-client`
+- `@deriv-com/analytics`
+- `@deriv-com/quill-ui` / `@deriv-com/quill-ui-next`
+- `@deriv-com/translations`
+- `@deriv/deriv-api`
+- `@deriv/deriv-charts`
 
 ### Cloud Services
-- **Cloudflare Pages** - Deployment platform
-- **Google Drive API** - Bot strategy storage and sync
-- **LiveChat** - Customer support integration
-- **Intercom** - In-app messaging (feature-flagged)
-- **GrowthBook** - Feature flag management
-- **Survicate** - User surveys
+- **Cloudflare Pages**: Deployment platform.
+- **Google Drive API**: Bot strategy storage and synchronization.
+- **MongoDB Atlas**: Database for tick collection and other data.
+- **LiveChat**: Customer support.
+- **Intercom**: In-app messaging (feature-flagged).
+- **GrowthBook**: Feature flag management.
+- **Survicate**: User surveys.
 
 ### Third-Party Libraries
-- `blockly` - Visual programming blocks
-- `mobx` / `mobx-react-lite` - State management
-- `react-router-dom` - Client-side routing
-- `formik` - Form handling
-- `@tanstack/react-query` - Server state management
-- `js-cookie` - Cookie management
-- `localforage` - Client-side storage
-- `lz-string` / `pako` - Compression utilities
-
-## Replit Migration (May 2026)
-
-### Build System Change
-- Migrated from Rsbuild to **Vite 8** (rolldown-based) as the build tool
-- `vite.config.ts` — has `requireShimPlugin` that injects `window.require` shim for CJS deps like react/react-dom
-- Added `<script type="module" src="/src/main.tsx">` to `index.html`
-
-### Key Compatibility Fixes
-- `@deriv-com/translations` **pinned to `"1.3.12"` exactly** — 1.4.x embeds React 19 internals incompatible with React 18
-- `error-boundary.js` renamed to `error-boundary.jsx` so Rolldown parses JSX correctly
-- `.npmrc` has `legacy-peer-deps=true`
-
-### Dev Environment Adaptations (Replit-specific)
-All changes below are Replit dev overrides — they do NOT affect production behavior:
-
-**`index.html`** — pre-seeds `localStorage.setItem('is_tmb_enabled', 'false')` and `window.is_tmb_enabled = false` to bypass the Firebase remote-config fetch (unreachable from Replit sandbox), making the TMB check instant.
-
-**`src/hooks/useStore.tsx`** — Store initialized synchronously via module-level singleton (`getOrCreateRootStore`) instead of `useEffect`, so `useStore()` never returns `null` on first render.
-
-**`src/app/App.tsx`** — `Layout` and `AppRoot` converted from `lazy()` imports to eager imports, eliminating the top-level Suspense "Please wait while we connect to the server..." fallback.
-
-**`src/app/app-root.tsx`** — Removed `is_api_initialized` loading gate; `api_base.init()` now fires in background without blocking render. AppContent is also an eager import.
-
-**`src/app/app-content.jsx`** — `is_loading` starts as `false` (no initial loading spinner); removed `setIsLoading(true)` from the `is_api_initialized` effect; WebSocket fallback timeout reduced from 8 s → 500 ms; active-symbols timeout reduced from 10 s → 1 s.
-
-**`src/components/layout/index.tsx`** — `isAuthenticating` starts as `false` (no false positive auth-spinner on load).
-
-**`src/hooks/useTMB.ts`** — All three `fetch()` calls now have `AbortController` timeouts (3 s Firebase, 5 s sessions) so they never hang indefinitely.
-
-### Result
-The app renders fully in the browser preview within ~1 second of page load, showing the complete Deriv Bot dashboard with navigation tabs, "Load or build your bot" section, and the onboarding modal.
-
-## KoriFx Branding & Backend (May 2026)
-
-### App Identity
-- Site rebranded as **KoriFx** — colors: cyan `#00d4ff`, purple `#7c3aed`, neon green `#10f593` on dark `#080d14`
-- App ID set to **89963** (via `APP_IDS.LOCALHOST` in config.ts + pre-seeded in localStorage via index.html)
-- `MONGODB_URI` and `APP_ID` set as env vars
-
-### KoriFx Loading Screen (`src/components/korifx-loader/`)
-- Full-screen animated loader with spinning rings, floating particles, grid background
-- Animated progress bar (purple → cyan → green gradient)
-- "AI-Powered Trading Automation" tagline, "powered by Deriv" text
-- Auto-dismisses after reaching 100%, triggers community modal
-
-### Community Modal (`src/components/community-modal/`)
-- Shown once per user after first load (stored in `localStorage.korifx_community_shown`)
-- Buttons for Telegram, WhatsApp, YouTube with branded colors
-- Dismissible via "Maybe later" or clicking outside
-
-### KoriFx Header (`src/components/korifx-header/`)
-- Persistent 38px top bar above the Deriv nav: KoriFx brand name + "powered by Deriv"
-- Social icons: Telegram, WhatsApp, YouTube
-- "Sign Up Free →" CTA button for new users (no accounts), links to affiliate URL `https://track.deriv.com/_EOT66RdgchlMjdsyM5hasGNd7ZgqdRLk/1/`
-- Added to `Layout` component above `AppHeader`
-
-### Charts Fix
-- Removed the 10-second forced timeout in `OfflineErrorBoundary` that was triggering false "Sorry for the interruption" errors when navigating to Charts
-
-### Chart WebSocket & Flutter Asset Fixes (May 2026)
-
-#### Chart API WebSocket Timing Fix
-- **Root cause**: `generateDerivApiInstance()` returns synchronously with a CONNECTING WebSocket (readyState 0). `chart_api.init()` set `this.api` immediately but the socket wasn't open yet, so `requestAPI` calls inside SmartChart queued indefinitely → "Retrieving Market Symbols..." forever.
-- **Fix** (`src/external/bot-skeleton/services/api/chart-api.js`): After assigning `this.api`, `init()` now `await`s a Promise that resolves on the WebSocket `open` event (or after a 10-second timeout). By the time `init()` resolves, the socket is truly OPEN.
-- **Chart.tsx polling** (`src/pages/chart/chart.tsx`): `useEffect` polls every 300ms for `chart_api?.api?.connection?.readyState === 1` — only sets `isConnectionOpened=true` when the socket is confirmed OPEN.
-
-#### Flutter Chart AssetManifest FormatException Fix
-- **Root cause**: The Flutter chart bootstrap (`flutter_bootstrap.js`) used `document.baseURI` (the page root `https://xxx.replit.dev/`) to resolve asset URLs. Fetching `AssetManifest.json` from the page root returned Vite's SPA fallback `index.html` instead of the actual JSON, causing `FormatException: SyntaxError: Unexpected token '<'`.
-- **Fix** (`public/js/smartcharts/chart/flutter_bootstrap.js`): Patched `_flutter.loader.load()` to include `config: { assetBase: '/js/smartcharts/chart/', entryPointBaseUrl: '/js/smartcharts/chart/' }` so Flutter resolves all assets from the correct subdirectory.
-- **Result**: `FormatException` eliminated from logs after fix; Flutter chart assets load correctly.
-
-### MongoDB (requires Atlas IP whitelist)
-- Backend connects to MongoDB Atlas if `MONGODB_URI` is set
-- **Action required**: In MongoDB Atlas → Network Access → Add IP Address → Allow from anywhere (`0.0.0.0/0`) to unblock Replit's dynamic IP
-- Falls back to in-memory store until IP is whitelisted
-
-## Recent Changes
-
-### Free Bots Feature (December 2025)
-- Added Free Bots page with 12 pre-built trading bot templates
-- Bot cards display with category filtering (Speed Trading, AI Trading, Pattern Analysis, etc.)
-- Click-to-load functionality that imports bot XML into Bot Builder
-- Responsive card design with hover effects and loading states
-- Bot XML files stored in `/public/bots/` directory
-- Files: `src/pages/free-bots/index.tsx`, `src/pages/free-bots/free-bots.scss`
-
-### Charts & Bot Builder Fixes (May 2026)
-
-#### Charts — Dual React Instance Fix
-- **Root cause**: `@deriv/deriv-charts` bundles its own React internally, creating two React instances which caused `Invalid hook call` errors and a blank SmartChart canvas
-- **Fix**: Added `resolve.dedupe: ['react', 'react-dom', 'react/jsx-runtime']` to `vite.config.ts` so Vite forces a single React instance across all packages
-- **Result**: `@deriv/deriv-charts` `SmartChart` now renders correctly; the `defaultProps` warning from the charts package confirms rendering succeeds
-
-#### Charts — Connection Polling Fix
-- `src/pages/chart/chart.tsx`: `is_connection_opened` now uses `useState + useEffect` polling (every 300ms) instead of a one-shot computed value. `chart_api.api` is a plain JS class (not MobX observable), so the original computed was always `false`
-- `src/stores/chart-store.ts`: Default symbol set to `R_100` so a symbol is always available before active-symbols loads
-
-#### Bot Builder — Initialization Timing Fix
-- **Root cause**: `BotBuilder.tsx` calls `app.onMount()` before `app.setDBotEngineStores()` runs in `app-content.jsx`'s `init()`, so `dbot_store` is null and Blockly never initializes
-- **Fix 1** (`src/stores/app-store.ts`): Added `_workspace_initialized: boolean` guard — `onMount()` returns early if already initialized, sets flag to `true` on success, resets flag in `onUnmount()`. Also wrapped `setInterval` creation in `if (!this.timer)` to prevent double timers
-- **Fix 2** (`src/app/app-content.jsx`): `init()` now explicitly calls `app.onMount()` immediately after `app.setDBotEngineStores()`, guaranteeing Blockly initializes with a valid `dbot_store`
-
-#### MobX Strict-Mode Warning Fix
-- `src/stores/blockly-store.ts`: `checkForSavedBots` changed from `action(async...)` wrapper to a plain `async` function using `runInAction(() => {...})` around post-`await` mutations. Removed from `makeObservable` action list since MobX cannot auto-wrap post-`await` code in async functions
-
-### Login / OAuth Fixes (May 2026)
-
-#### Root Causes
-1. **"Oops! Something went wrong" on Deriv** — All three login paths (`header.tsx`, `main.tsx`, `layout/index.tsx`) were calling OIDC (`requestOidcAuthentication`) by default. OIDC requires the redirect URI to be pre-registered with Deriv, and the Replit URL was not registered. The app was also missing `redirect_uri` in the legacy OAuth URL.
-2. **Post-login stays on Deriv instead of returning** — `callback-page.tsx` line ~105 was redirecting to `window.location.origin + 'bot/?account=...'` (missing leading `/`), creating a broken URL like `https://xxx.replitdev/bot/`.
-3. **`isOAuth2Enabled` was `undefined`** — `useOauth2.ts` hook didn't return `isOAuth2Enabled`, so destructuring it gave `undefined`, which caused inconsistent behavior.
-
-#### Fixes Applied
-- **`src/components/shared/utils/login/login.ts`**: Added `redirect_uri=${encodeURIComponent(window.location.origin)}` to all OAuth URL paths
-- **`src/components/shared/utils/config/config.ts`**: Added `original_url.searchParams.set('redirect_uri', window.location.origin)` in `generateOAuthURL()`
-- **`src/pages/callback/callback-page.tsx`**: Fixed redirect from `origin + 'bot/?account=...'` → `origin + '/?account=...'`
-- **`src/hooks/auth/useOauth2.ts`**: Added `isOAuth2Enabled: false` to hook return value
-- **`src/components/layout/header/header.tsx`**, **`src/pages/main/main.tsx`**, **`src/components/layout/index.tsx`**: Replaced OIDC flow with direct legacy OAuth (`window.location.replace(generateOAuthURL())`) when TMB is not enabled. Removed all `requestOidcAuthentication` imports.
-- **`src/pages/chart/chart.tsx`**: Added null-safe `?.` on `chart_api.api?.forgetAll?.('ticks')` cleanup to prevent crash if API disconnects before unmount.
-
-#### ⚠️ Action Required for Login to Work
-For the OAuth redirect to land back on KoriFx, **app_id=89963 must have the Replit URL registered** as an allowed redirect URI:
-1. Log in to [Deriv App Manager](https://app.deriv.com/account/api-token) (open a new tab in your Deriv account)
-2. Find app **89963** → Edit → Redirect URL
-3. Add: `https://28ff9124-4ebb-41be-b290-7fca43f0d402-00-3v5yd0u046ct.worf.replit.dev`
-4. Save. Login will redirect back to KoriFx automatically.
-
-### MongoDB Tick Collector (May 2026)
-- `server/services/tick-collector.js`: WebSocket collector for 16 markets (R_10/25/50/75/100, 1HZ variants, BOOM300N/500/1000, CRASH300N/500/1000)
-- `server/index.js`: Collector starts on boot; `/api/collector/stats` endpoint reports live counts
-- Collecting 400–600 ticks/minute across all markets; stored in MongoDB Atlas (`ticks` collection)
-- **Requires**: MongoDB Atlas Network Access → Allow `0.0.0.0/0`
+- `blockly`: Visual programming library.
+- `mobx` / `mobx-react-lite`: State management.
+- `react-router-dom`: Client-side routing.
+- `formik`: Form handling.
+- `@tanstack/react-query`: Server state management.
+- `js-cookie`: Cookie management.
+- `localforage`: Client-side storage.
+- `lz-string` / `pako`: Compression utilities.
