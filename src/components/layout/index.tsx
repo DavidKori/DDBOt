@@ -8,8 +8,6 @@ import { api_base } from '@/external/bot-skeleton';
 import { useOfflineDetection } from '@/hooks/useOfflineDetection';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
-import { handleOidcAuthFailure } from '@/utils/auth-utils';
-import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import { useDevice } from '@deriv-com/ui';
 import { crypto_currencies_display_order, fiat_currencies_display_order } from '../shared';
 import Footer from './footer';
@@ -168,21 +166,8 @@ const Layout = observer(() => {
                     if (query_param_currency) {
                         sessionStorage.setItem('query_param_currency', query_param_currency);
                     }
-                    try {
-                        await requestOidcAuthentication({
-                            redirectCallbackUri: `${window.location.origin}/callback`,
-                            ...(query_param_currency
-                                ? {
-                                      state: {
-                                          account: query_param_currency,
-                                      },
-                                  }
-                                : {}),
-                        });
-                    } catch (err) {
-                        setIsAuthenticating(false);
-                        handleOidcAuthFailure(err);
-                    }
+                    // Use legacy OAuth — OIDC requires pre-registered redirect URIs
+                    window.location.replace(generateOAuthURL());
                 }
             } catch (err) {
                 // eslint-disable-next-line no-console

@@ -10,9 +10,8 @@ import { useFirebaseCountriesConfig } from '@/hooks/firebase/useFirebaseCountrie
 import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
-import { clearAuthData, handleOidcAuthFailure } from '@/utils/auth-utils';
+import { clearAuthData } from '@/utils/auth-utils';
 import { StandaloneCircleUserRegularIcon } from '@deriv/quill-icons/Standalone';
-import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import { Localize, useTranslations } from '@deriv-com/translations';
 import { Header, useDevice, Wrapper } from '@deriv-com/ui';
 import { Tooltip } from '@deriv-com/ui';
@@ -151,22 +150,9 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                                 if (tmbEnabled) {
                                     await onRenderTMBCheck(true); // Pass true to indicate it's from login button
                                 } else {
-                                    // Always use OIDC if TMB is not enabled
-                                    try {
-                                        await requestOidcAuthentication({
-                                            redirectCallbackUri: `${window.location.origin}/callback`,
-                                            ...(query_param_currency
-                                                ? {
-                                                      state: {
-                                                          account: query_param_currency,
-                                                      },
-                                                  }
-                                                : {}),
-                                        });
-                                    } catch (err) {
-                                        handleOidcAuthFailure(err);
-                                        window.location.replace(generateOAuthURL());
-                                    }
+                                    // Use legacy OAuth — OIDC requires pre-registered redirect URIs
+                                    // which don't work in dev/Replit environments
+                                    window.location.replace(generateOAuthURL());
                                 }
                             } catch (error) {
                                 // eslint-disable-next-line no-console

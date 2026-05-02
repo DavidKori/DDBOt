@@ -174,6 +174,28 @@ The app renders fully in the browser preview within ~1 second of page load, show
 #### MobX Strict-Mode Warning Fix
 - `src/stores/blockly-store.ts`: `checkForSavedBots` changed from `action(async...)` wrapper to a plain `async` function using `runInAction(() => {...})` around post-`await` mutations. Removed from `makeObservable` action list since MobX cannot auto-wrap post-`await` code in async functions
 
+### Login / OAuth Fixes (May 2026)
+
+#### Root Causes
+1. **"Oops! Something went wrong" on Deriv** — All three login paths (`header.tsx`, `main.tsx`, `layout/index.tsx`) were calling OIDC (`requestOidcAuthentication`) by default. OIDC requires the redirect URI to be pre-registered with Deriv, and the Replit URL was not registered. The app was also missing `redirect_uri` in the legacy OAuth URL.
+2. **Post-login stays on Deriv instead of returning** — `callback-page.tsx` line ~105 was redirecting to `window.location.origin + 'bot/?account=...'` (missing leading `/`), creating a broken URL like `https://xxx.replitdev/bot/`.
+3. **`isOAuth2Enabled` was `undefined`** — `useOauth2.ts` hook didn't return `isOAuth2Enabled`, so destructuring it gave `undefined`, which caused inconsistent behavior.
+
+#### Fixes Applied
+- **`src/components/shared/utils/login/login.ts`**: Added `redirect_uri=${encodeURIComponent(window.location.origin)}` to all OAuth URL paths
+- **`src/components/shared/utils/config/config.ts`**: Added `original_url.searchParams.set('redirect_uri', window.location.origin)` in `generateOAuthURL()`
+- **`src/pages/callback/callback-page.tsx`**: Fixed redirect from `origin + 'bot/?account=...'` → `origin + '/?account=...'`
+- **`src/hooks/auth/useOauth2.ts`**: Added `isOAuth2Enabled: false` to hook return value
+- **`src/components/layout/header/header.tsx`**, **`src/pages/main/main.tsx`**, **`src/components/layout/index.tsx`**: Replaced OIDC flow with direct legacy OAuth (`window.location.replace(generateOAuthURL())`) when TMB is not enabled. Removed all `requestOidcAuthentication` imports.
+- **`src/pages/chart/chart.tsx`**: Added null-safe `?.` on `chart_api.api?.forgetAll?.('ticks')` cleanup to prevent crash if API disconnects before unmount.
+
+#### ⚠️ Action Required for Login to Work
+For the OAuth redirect to land back on KoriFx, **app_id=89963 must have the Replit URL registered** as an allowed redirect URI:
+1. Log in to [Deriv App Manager](https://app.deriv.com/account/api-token) (open a new tab in your Deriv account)
+2. Find app **89963** → Edit → Redirect URL
+3. Add: `https://28ff9124-4ebb-41be-b290-7fca43f0d402-00-3v5yd0u046ct.worf.replit.dev`
+4. Save. Login will redirect back to KoriFx automatically.
+
 ### MongoDB Tick Collector (May 2026)
 - `server/services/tick-collector.js`: WebSocket collector for 16 markets (R_10/25/50/75/100, 1HZ variants, BOOM300N/500/1000, CRASH300N/500/1000)
 - `server/index.js`: Collector starts on boot; `/api/collector/stats` endpoint reports live counts

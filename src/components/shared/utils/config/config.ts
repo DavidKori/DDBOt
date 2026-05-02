@@ -148,6 +148,9 @@ export const generateOAuthURL = () => {
     const original_url = new URL(oauth_url);
     const hostname = window.location.hostname;
 
+    // Always include redirect_uri so Deriv redirects back to this app after login
+    original_url.searchParams.set('redirect_uri', window.location.origin);
+
     // First priority: Check for configured server URLs (for QA/testing environments)
     const configured_server_url = (LocalStorageUtils.getValue(LocalStorageConstants.configServerURL) ||
         localStorage.getItem('config.server_url')) as string;
