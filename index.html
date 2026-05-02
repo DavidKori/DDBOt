@@ -88,16 +88,18 @@
         </script>
         <!-- End LiveChat script -->
 
-        <!-- Skip Firebase TMB fetch in Replit dev environment -->
+        <!-- KoriFx: pre-seed app config -->
         <script>
             (function() {
                 try {
-                    // Pre-seed TMB flag so isTmbEnabled() resolves immediately without Firebase fetch
                     if (!localStorage.getItem('is_tmb_enabled')) {
                         localStorage.setItem('is_tmb_enabled', 'false');
                     }
-                    // Pre-seed is_tmb_enabled on window so initializeHook skips getActiveSessions
                     window.is_tmb_enabled = false;
+                    // Set KoriFx app_id (89963) so Deriv API uses the correct application
+                    if (!localStorage.getItem('config.app_id')) {
+                        localStorage.setItem('config.app_id', '89963');
+                    }
                 } catch(e) {}
             })();
         </script>

@@ -39,16 +39,8 @@ class OfflineErrorBoundary extends React.Component<Props, State> {
     }
 
     componentDidMount() {
-        // Set a timeout to catch hanging components
-        this.timeoutId = setTimeout(() => {
-            if (!this.state.hasError) {
-                console.log('[OfflineErrorBoundary] Component loading timeout, showing error boundary');
-                this.setState({
-                    hasError: true,
-                    error: new Error('Component loading timeout - possibly offline'),
-                });
-            }
-        }, 10000); // 10 second timeout
+        // Timeout removed — it caused false-positive "Sorry for the interruption"
+        // errors on the Charts tab even when the component was working fine.
     }
 
     componentWillUnmount() {

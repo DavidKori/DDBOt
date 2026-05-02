@@ -47,14 +47,20 @@ waitForPort = 3001
 outputType = "console"
 
 [[ports]]
-localPort = 5000
-externalPort = 80
-
-[[ports]]
 localPort = 3001
 externalPort = 3001
+
+[[ports]]
+localPort = 5000
+externalPort = 80
 
 [deployment]
 deploymentTarget = "static"
 build = ["npm", "run", "build"]
 publicDir = "dist"
+
+[userenv]
+
+[userenv.shared]
+APP_ID = "89963"
+MONGODB_URI = "mongodb+srv://mutugidavid37_db_user:UZUqTl8dskceu2gl@maincluster.wuecidk.mongodb.net/Korifx?appName=MainCluster"

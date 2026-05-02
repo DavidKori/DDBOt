@@ -113,6 +113,38 @@ All changes below are Replit dev overrides — they do NOT affect production beh
 ### Result
 The app renders fully in the browser preview within ~1 second of page load, showing the complete Deriv Bot dashboard with navigation tabs, "Load or build your bot" section, and the onboarding modal.
 
+## KoriFx Branding & Backend (May 2026)
+
+### App Identity
+- Site rebranded as **KoriFx** — colors: cyan `#00d4ff`, purple `#7c3aed`, neon green `#10f593` on dark `#080d14`
+- App ID set to **89963** (via `APP_IDS.LOCALHOST` in config.ts + pre-seeded in localStorage via index.html)
+- `MONGODB_URI` and `APP_ID` set as env vars
+
+### KoriFx Loading Screen (`src/components/korifx-loader/`)
+- Full-screen animated loader with spinning rings, floating particles, grid background
+- Animated progress bar (purple → cyan → green gradient)
+- "AI-Powered Trading Automation" tagline, "powered by Deriv" text
+- Auto-dismisses after reaching 100%, triggers community modal
+
+### Community Modal (`src/components/community-modal/`)
+- Shown once per user after first load (stored in `localStorage.korifx_community_shown`)
+- Buttons for Telegram, WhatsApp, YouTube with branded colors
+- Dismissible via "Maybe later" or clicking outside
+
+### KoriFx Header (`src/components/korifx-header/`)
+- Persistent 38px top bar above the Deriv nav: KoriFx brand name + "powered by Deriv"
+- Social icons: Telegram, WhatsApp, YouTube
+- "Sign Up Free →" CTA button for new users (no accounts), links to affiliate URL `https://track.deriv.com/_EOT66RdgchlMjdsyM5hasGNd7ZgqdRLk/1/`
+- Added to `Layout` component above `AppHeader`
+
+### Charts Fix
+- Removed the 10-second forced timeout in `OfflineErrorBoundary` that was triggering false "Sorry for the interruption" errors when navigating to Charts
+
+### MongoDB (requires Atlas IP whitelist)
+- Backend connects to MongoDB Atlas if `MONGODB_URI` is set
+- **Action required**: In MongoDB Atlas → Network Access → Add IP Address → Allow from anywhere (`0.0.0.0/0`) to unblock Replit's dynamic IP
+- Falls back to in-memory store until IP is whitelisted
+
 ## Recent Changes
 
 ### Free Bots Feature (December 2025)

@@ -1,0 +1,188 @@
+.korifx-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #080d14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    &__bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(0, 212, 255, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 212, 255, 0.04) 1px, transparent 1px);
+        background-size: 40px 40px;
+        animation: kfx-grid-drift 20s linear infinite;
+    }
+
+    &__particles {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    &__particle {
+        position: absolute;
+        border-radius: 50%;
+        animation: kfx-float-up linear infinite;
+        background: rgba(0, 212, 255, 0.5);
+
+        &.p0  { width: 4px;  height: 4px;  left: 8%;  bottom: -20px; background: rgba(124, 58, 237, 0.6); animation-duration: 6s;   animation-delay: 0s; }
+        &.p1  { width: 7px;  height: 7px;  left: 16%; bottom: -20px; background: rgba(0, 212, 255, 0.5);  animation-duration: 6.8s; animation-delay: 0.4s; }
+        &.p2  { width: 10px; height: 10px; left: 24%; bottom: -20px; background: rgba(16, 245, 147, 0.5); animation-duration: 7.6s; animation-delay: 0.8s; }
+        &.p3  { width: 4px;  height: 4px;  left: 32%; bottom: -20px; background: rgba(124, 58, 237, 0.6); animation-duration: 8.4s; animation-delay: 1.2s; }
+        &.p4  { width: 7px;  height: 7px;  left: 40%; bottom: -20px; background: rgba(0, 212, 255, 0.5);  animation-duration: 9.2s; animation-delay: 1.6s; }
+        &.p5  { width: 10px; height: 10px; left: 48%; bottom: -20px; background: rgba(16, 245, 147, 0.5); animation-duration: 10s;  animation-delay: 2s; }
+        &.p6  { width: 4px;  height: 4px;  left: 56%; bottom: -20px; background: rgba(124, 58, 237, 0.6); animation-duration: 10.8s; animation-delay: 2.4s; }
+        &.p7  { width: 7px;  height: 7px;  left: 64%; bottom: -20px; background: rgba(0, 212, 255, 0.5);  animation-duration: 11.6s; animation-delay: 2.8s; }
+        &.p8  { width: 10px; height: 10px; left: 72%; bottom: -20px; background: rgba(16, 245, 147, 0.5); animation-duration: 12.4s; animation-delay: 3.2s; }
+        &.p9  { width: 4px;  height: 4px;  left: 80%; bottom: -20px; background: rgba(124, 58, 237, 0.6); animation-duration: 13.2s; animation-delay: 3.6s; }
+        &.p10 { width: 7px;  height: 7px;  left: 88%; bottom: -20px; background: rgba(0, 212, 255, 0.5);  animation-duration: 14s;   animation-delay: 4s; }
+        &.p11 { width: 10px; height: 10px; left: 95%; bottom: -20px; background: rgba(16, 245, 147, 0.5); animation-duration: 14.8s; animation-delay: 4.4s; }
+    }
+
+    &__content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+
+        &--ready {
+            opacity: 0;
+            transform: scale(1.05);
+        }
+    }
+
+    &__logo-wrap {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__logo-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        animation: kfx-spin 3s linear infinite;
+
+        &:first-child {
+            width: 100px;
+            height: 100px;
+            border-top-color: #00d4ff;
+            border-right-color: rgba(0, 212, 255, 0.3);
+        }
+
+        &--outer {
+            width: 120px;
+            height: 120px;
+            border-bottom-color: #7c3aed;
+            border-left-color: rgba(124, 58, 237, 0.3);
+            animation-direction: reverse;
+            animation-duration: 2s;
+        }
+    }
+
+    &__logo-text {
+        font-family: 'IBM Plex Mono', 'Courier New', monospace;
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: #e6edf3;
+        letter-spacing: -1px;
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+        animation: kfx-pulse-glow 2s ease-in-out infinite alternate;
+    }
+
+    &__logo-k {
+        color: #00d4ff;
+    }
+
+    &__logo-fx {
+        color: #7c3aed;
+    }
+
+    &__tagline {
+        font-family: 'IBM Plex Mono', 'Courier New', monospace;
+        font-size: 1.1rem;
+        color: rgba(230, 237, 243, 0.5);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin: 0;
+    }
+
+    &__bar-wrap {
+        position: relative;
+        width: 320px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 2px;
+        overflow: visible;
+    }
+
+    &__bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #7c3aed, #00d4ff, #10f593);
+        border-radius: 2px;
+        transition: width 0.15s ease;
+        box-shadow: 0 0 12px rgba(0, 212, 255, 0.6);
+    }
+
+    &__bar-glow {
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #00d4ff;
+        box-shadow: 0 0 16px 6px rgba(0, 212, 255, 0.7);
+    }
+
+    &__pct {
+        font-family: 'IBM Plex Mono', 'Courier New', monospace;
+        font-size: 1.2rem;
+        color: #00d4ff;
+        margin: 0;
+        letter-spacing: 2px;
+    }
+
+    &__powered {
+        font-size: 1.1rem;
+        color: rgba(230, 237, 243, 0.35);
+        margin: 0;
+        letter-spacing: 1px;
+    }
+
+    &__deriv {
+        color: #00d4ff;
+        font-weight: 600;
+    }
+}
+
+@keyframes kfx-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes kfx-pulse-glow {
+    from { text-shadow: 0 0 20px rgba(0, 212, 255, 0.4); }
+    to   { text-shadow: 0 0 40px rgba(0, 212, 255, 0.9), 0 0 80px rgba(124, 58, 237, 0.4); }
+}
+
+@keyframes kfx-float-up {
+    0%   { transform: translateY(0) scale(1); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+}
+
+@keyframes kfx-grid-drift {
+    from { background-position: 0 0; }
+    to   { background-position: 40px 40px; }
+}

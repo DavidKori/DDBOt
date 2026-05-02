@@ -1,8 +1,10 @@
 import { initSurvicate } from '../public-path';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useCallback } from 'react';
 import React from 'react';
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
 import ChunkLoader from '@/components/loader/chunk-loader';
+import CommunityModal from '@/components/community-modal';
+import KoriFxLoader from '@/components/korifx-loader';
 import RoutePromptDialog from '@/components/route-prompt-dialog';
 import { crypto_currencies_display_order, fiat_currencies_display_order } from '@/components/shared';
 import { useOfflineDetection } from '@/hooks/useOfflineDetection';
@@ -24,15 +26,10 @@ const i18nInstance = initializeI18n({
     cdnUrl: `${TRANSLATIONS_CDN_URL}/${R2_PROJECT_NAME}/${CROWDIN_BRANCH_NAME}`,
 });
 
-// Simple Suspense wrapper without timeout that causes dark landing page
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => {
     const { isOnline } = useOfflineDetection();
-
-    const getLoadingMessage = () => {
-        if (!isOnline) return localize('Loading offline dashboard...');
-        return localize('Please wait while we connect to the server...');
-    };
-
+    const getLoadingMessage = () =>
+        !isOnline ? localize('Loading offline dashboard...') : localize('Please wait while we connect...');
     return <Suspense fallback={<ChunkLoader message={getLoadingMessage()} />}>{children}</Suspense>;
 };
 
@@ -53,7 +50,6 @@ const router = createBrowserRouter(
                 </SuspenseWrapper>
             }
         >
-            {/* All child routes will be passed as children to Layout */}
             <Route index element={<AppRoot />} />
             <Route path='endpoint' element={<Endpoint />} />
             <Route path='callback' element={<CallbackPage />} />
@@ -64,14 +60,18 @@ const router = createBrowserRouter(
 );
 
 function App() {
-    React.useEffect(() => {
-        // Use the invalid token handler hook to automatically retrigger OIDC authentication
-        // when an invalid token is detected and the cookie logged state is true
+    const [showLoader, setShowLoader] = useState(true);
+    const [showCommunity, setShowCommunity] = useState(false);
 
+    const handleLoaderDone = useCallback(() => {
+        setShowLoader(false);
+        setShowCommunity(true);
+    }, []);
+
+    React.useEffect(() => {
         initSurvicate();
         window?.dataLayer?.push({ event: 'page_load' });
         return () => {
-            // Clean up the invalid token handler when the component unmounts
             const survicate_box = document.getElementById('survicate-box');
             if (survicate_box) {
                 survicate_box.style.display = 'none';
@@ -85,7 +85,6 @@ function App() {
         const url_params = new URLSearchParams(window.location.search);
         const account_currency = url_params.get('account');
         const validCurrencies = [...fiat_currencies_display_order, ...crypto_currencies_display_order];
-
         const is_valid_currency = account_currency && validCurrencies.includes(account_currency?.toUpperCase());
 
         if (!accounts_list || !client_accounts) return;
@@ -99,10 +98,8 @@ function App() {
                 localStorage.setItem('active_loginid', loginid);
             };
 
-            // Handle demo account
             if (account_currency?.toUpperCase() === 'DEMO') {
                 const demo_account = Object.entries(parsed_accounts).find(([key]) => key.startsWith('VR'));
-
                 if (demo_account) {
                     const [loginid, token] = demo_account;
                     updateLocalStorage(String(token), loginid);
@@ -110,13 +107,11 @@ function App() {
                 }
             }
 
-            // Handle real account with valid currency
             if (account_currency?.toUpperCase() !== 'DEMO' && is_valid_currency) {
                 const real_account = Object.entries(parsed_client_accounts).find(
                     ([loginid, account]) =>
                         !loginid.startsWith('VR') && account.currency.toUpperCase() === account_currency?.toUpperCase()
                 );
-
                 if (real_account) {
                     const [loginid, account] = real_account;
                     if ('token' in account) {
@@ -130,7 +125,13 @@ function App() {
         }
     }, []);
 
-    return <RouterProvider router={router} />;
+    return (
+        <>
+            {showLoader && <KoriFxLoader onDone={handleLoaderDone} />}
+            {showCommunity && <CommunityModal />}
+            <RouterProvider router={router} />
+        </>
+    );
 }
 
 export default App;

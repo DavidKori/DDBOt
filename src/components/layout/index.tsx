@@ -15,6 +15,7 @@ import { crypto_currencies_display_order, fiat_currencies_display_order } from '
 import Footer from './footer';
 import AppHeader from './header';
 import Body from './main-body';
+import KoriFxHeader from '@/components/korifx-header';
 import './layout.scss';
 
 const Layout = observer(() => {
@@ -240,6 +241,7 @@ const Layout = observer(() => {
                 'quick-strategy-active': is_quick_strategy_active && !isDesktop,
             })}
         >
+            {!isCallbackPage && <KoriFxHeader />}
             {!isCallbackPage && <AppHeader isAuthenticating={isAuthenticating || !isInitialAuthCheckComplete} />}
             <Body>
                 <Outlet />
