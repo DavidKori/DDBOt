@@ -53,6 +53,7 @@ export default defineConfig({
         rawPlugin(),
     ],
     resolve: {
+        dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
         alias: [
             { find: /^@\/(.+)$/, replacement: path.resolve(__dirname, 'src') + '/$1' },
             { find: '@deriv/quill-icons/Illustration', replacement: path.resolve(__dirname, 'src/utils/illustration-icons-shim.tsx') },

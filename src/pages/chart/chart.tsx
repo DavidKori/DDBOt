@@ -61,20 +61,6 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         position: ui.is_chart_layout_default ? 'bottom' : 'left',
         theme: ui.is_dark_mode_on ? 'dark' : 'light',
     };
-    console.log({
-        chart_type,
-        getMarketsOrder,
-        granularity,
-        onSymbolChange,
-        setChartStatus,
-        symbol,
-        updateChartType,
-        updateGranularity,
-        updateSymbol,
-        setChartSubscriptionId,
-        chart_subscription_id,
-    });
-
     useEffect(() => {
         // Safari browser detection
         const isSafariBrowser = () => {
@@ -124,7 +110,22 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         }
     };
 
-    const is_connection_opened = !!chart_api?.api;
+    const [is_connection_opened, setIsConnectionOpened] = useState(!!chart_api?.api);
+
+    useEffect(() => {
+        if (chart_api?.api) {
+            setIsConnectionOpened(true);
+            return;
+        }
+        const poll = setInterval(() => {
+            if (chart_api?.api) {
+                setIsConnectionOpened(true);
+                clearInterval(poll);
+            }
+        }, 300);
+        return () => clearInterval(poll);
+    }, []);
+
     if (!symbol) return (
         <div
             className='dashboard__chart-wrapper'

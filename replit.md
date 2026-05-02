@@ -154,3 +154,28 @@ The app renders fully in the browser preview within ~1 second of page load, show
 - Responsive card design with hover effects and loading states
 - Bot XML files stored in `/public/bots/` directory
 - Files: `src/pages/free-bots/index.tsx`, `src/pages/free-bots/free-bots.scss`
+
+### Charts & Bot Builder Fixes (May 2026)
+
+#### Charts — Dual React Instance Fix
+- **Root cause**: `@deriv/deriv-charts` bundles its own React internally, creating two React instances which caused `Invalid hook call` errors and a blank SmartChart canvas
+- **Fix**: Added `resolve.dedupe: ['react', 'react-dom', 'react/jsx-runtime']` to `vite.config.ts` so Vite forces a single React instance across all packages
+- **Result**: `@deriv/deriv-charts` `SmartChart` now renders correctly; the `defaultProps` warning from the charts package confirms rendering succeeds
+
+#### Charts — Connection Polling Fix
+- `src/pages/chart/chart.tsx`: `is_connection_opened` now uses `useState + useEffect` polling (every 300ms) instead of a one-shot computed value. `chart_api.api` is a plain JS class (not MobX observable), so the original computed was always `false`
+- `src/stores/chart-store.ts`: Default symbol set to `R_100` so a symbol is always available before active-symbols loads
+
+#### Bot Builder — Initialization Timing Fix
+- **Root cause**: `BotBuilder.tsx` calls `app.onMount()` before `app.setDBotEngineStores()` runs in `app-content.jsx`'s `init()`, so `dbot_store` is null and Blockly never initializes
+- **Fix 1** (`src/stores/app-store.ts`): Added `_workspace_initialized: boolean` guard — `onMount()` returns early if already initialized, sets flag to `true` on success, resets flag in `onUnmount()`. Also wrapped `setInterval` creation in `if (!this.timer)` to prevent double timers
+- **Fix 2** (`src/app/app-content.jsx`): `init()` now explicitly calls `app.onMount()` immediately after `app.setDBotEngineStores()`, guaranteeing Blockly initializes with a valid `dbot_store`
+
+#### MobX Strict-Mode Warning Fix
+- `src/stores/blockly-store.ts`: `checkForSavedBots` changed from `action(async...)` wrapper to a plain `async` function using `runInAction(() => {...})` around post-`await` mutations. Removed from `makeObservable` action list since MobX cannot auto-wrap post-`await` code in async functions
+
+### MongoDB Tick Collector (May 2026)
+- `server/services/tick-collector.js`: WebSocket collector for 16 markets (R_10/25/50/75/100, 1HZ variants, BOOM300N/500/1000, CRASH300N/500/1000)
+- `server/index.js`: Collector starts on boot; `/api/collector/stats` endpoint reports live counts
+- Collecting 400–600 ticks/minute across all markets; stored in MongoDB Atlas (`ticks` collection)
+- **Requires**: MongoDB Atlas Network Access → Allow `0.0.0.0/0`

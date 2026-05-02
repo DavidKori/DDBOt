@@ -19,6 +19,7 @@ export default class AppStore {
     dbot_store: RootStore | null;
     api_helpers_store: TApiHelpersStore | null;
     timer: ReturnType<typeof setInterval> | null;
+    _workspace_initialized: boolean;
     disposeReloadOnLanguageChangeReaction: unknown;
     disposeCurrencyReaction: unknown;
     disposeSwitchAccountListener: unknown;
@@ -43,6 +44,7 @@ export default class AppStore {
         this.dbot_store = null;
         this.api_helpers_store = null;
         this.timer = null;
+        this._workspace_initialized = false;
     }
 
     getErrorForNonEuClients = () => ({
@@ -161,19 +163,23 @@ export default class AppStore {
 
         let timer_counter = 1;
 
-        this.timer = setInterval(() => {
-            if (window.sendRequestsStatistic) {
-                window.sendRequestsStatistic(false);
-                performance.clearMeasures();
-                if (timer_counter === 6 || run_panel?.is_running) {
-                    if (this.timer) clearInterval(this.timer);
-                } else {
-                    timer_counter++;
+        if (!this.timer) {
+            this.timer = setInterval(() => {
+                if (window.sendRequestsStatistic) {
+                    window.sendRequestsStatistic(false);
+                    performance.clearMeasures();
+                    if (timer_counter === 6 || run_panel?.is_running) {
+                        if (this.timer) clearInterval(this.timer);
+                    } else {
+                        timer_counter++;
+                    }
                 }
-            }
-        }, 10000);
+            }, 10000);
+        }
 
         if (!this.dbot_store) return;
+        if (this._workspace_initialized) return;
+        this._workspace_initialized = true;
 
         blockly_store.setLoading(true);
         await DBot.initWorkspace('/', this.dbot_store, this.api_helpers_store, ui.is_mobile, false);
@@ -202,6 +208,7 @@ export default class AppStore {
     };
 
     onUnmount = () => {
+        this._workspace_initialized = false;
         DBot.terminateBot();
         DBot.terminateConnection();
         if (window.Blockly?.derivWorkspace) {
