@@ -46,13 +46,15 @@ export default defineConfig({
         alias: {
             react: path.resolve('./node_modules/react'),
             'react-dom': path.resolve('./node_modules/react-dom'),
+            '@deriv-com/quill-ui': path.resolve('./node_modules/@deriv-com/quill-ui/dist/main.js'),
+            '@deriv-com/quill-ui-next': path.resolve('./node_modules/@deriv-com/quill-ui-next/dist/index.mjs'),
             '@/external': path.resolve(__dirname, './src/external'),
             '@/components': path.resolve(__dirname, './src/components'),
             '@/hooks': path.resolve(__dirname, './src/hooks'),
             '@/utils': path.resolve(__dirname, './src/utils'),
             '@/constants': path.resolve(__dirname, './src/constants'),
             '@/stores': path.resolve(__dirname, './src/stores'),
-            '@deriv/quill-icons/Illustration': path.resolve(__dirname, './node_modules/@deriv/quill-icons/dist/esm/react/Illustration/index.js'),
+            '@deriv/quill-icons/Illustration': path.resolve(__dirname, './src/utils/illustration-icons-shim.tsx'),
             '@deriv/quill-icons/Illustrative': path.resolve(__dirname, './node_modules/@deriv/quill-icons/dist/esm/react/Illustrative/index.js'),
             '@deriv/quill-icons/LabelPaired': path.resolve(__dirname, './node_modules/@deriv/quill-icons/dist/esm/react/LabelPaired/index.js'),
             '@deriv/quill-icons/Legacy': path.resolve(__dirname, './node_modules/@deriv/quill-icons/dist/esm/react/Legacy/index.js'),
@@ -111,7 +113,9 @@ export default defineConfig({
     tools: {
         rspack: {
             plugins: [],
-            resolve: {},
+            resolve: {
+                conditionNames: ['import', 'module', 'browser', 'default'],
+            },
             module: {
                 rules: [
                     {

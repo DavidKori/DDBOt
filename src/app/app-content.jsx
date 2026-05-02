@@ -35,7 +35,7 @@ import '../components/bot-notification/bot-notification.scss';
 const AppContent = observer(() => {
     const [is_api_initialized, setIsApiInitialized] = React.useState(false);
     const [is_loading, setIsLoading] = React.useState(true);
-    const [is_eu_error_loading, setIsEuErrorLoading] = React.useState(true);
+    const [is_eu_error_loading, setIsEuErrorLoading] = React.useState(false);
     const [offline_timeout, setOfflineTimeout] = React.useState(null);
     const store = useStore();
     const { app, transactions, common, client } = store;
@@ -81,6 +81,21 @@ const AppContent = observer(() => {
             common.setSocketOpened(false);
         }
     }, [common, connectionStatus, offline_timeout]);
+
+    // Fallback: force API initialization after 8 seconds even if WebSocket never opens
+    useEffect(() => {
+        const fallbackTimeout = setTimeout(() => {
+            setIsApiInitialized(prev => {
+                if (!prev) {
+                    console.log('[Timeout] WebSocket connection timeout, forcing API initialization');
+                    return true;
+                }
+                return prev;
+            });
+        }, 8000);
+        return () => clearTimeout(fallbackTimeout);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Handle offline scenarios - don't wait indefinitely for API
     useEffect(() => {

@@ -2,6 +2,8 @@ import ReactDOM from 'react-dom/client';
 import { AuthWrapper } from './app/AuthWrapper';
 import { AnalyticsInitializer } from './utils/analytics';
 import { registerPWA } from './utils/pwa-utils';
+import './styles/deriv-ui.css';
+import './styles/quill-ui.css';
 import './styles/index.scss';
 
 AnalyticsInitializer();

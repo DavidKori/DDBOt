@@ -737,7 +737,10 @@ $wallet-bg-color: (
     @each $currency, $types in $currencies-map {
         @each $type, $themes in $types {
             @each $theme, $colors in $themes {
-                $t: if($theme == 'dark', '--dark', '');
+                $t: '';
+                @if $theme == 'dark' {
+                    $t: '--dark';
+                }
 
                 .wallet-#{$type}__#{string.to-lower-case($currency)}-bg#{$t} {
                     background: map.get($colors, 'desktop');
