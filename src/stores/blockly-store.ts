@@ -46,16 +46,15 @@ export default class BlocklyStore {
     _has_saved_bots = false;
 
     // Method to check for saved bots and update the cache
-    checkForSavedBots = async (): Promise<void> => {
+    checkForSavedBots = action(async (): Promise<void> => {
         try {
             const workspaces = await getSavedWorkspaces();
-            // Use action to update observable property
             this._has_saved_bots = Array.isArray(workspaces) && workspaces.length > 0;
         } catch (e) {
             console.error('Error checking for saved workspaces:', e);
             this._has_saved_bots = false;
         }
-    };
+    });
 
     setActiveTab = (tab: string): void => {
         this.active_tab = tab;

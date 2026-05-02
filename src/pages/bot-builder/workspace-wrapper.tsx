@@ -10,6 +10,7 @@ import './workspace.scss';
 const WorkspaceWrapper = observer(() => {
     const { blockly_store } = useStore();
     const { onMount, onUnmount, is_loading } = blockly_store;
+    const [workspace_ready, setWorkspaceReady] = React.useState(!!window.Blockly?.derivWorkspace);
 
     React.useEffect(() => {
         onMount();
@@ -18,9 +19,27 @@ const WorkspaceWrapper = observer(() => {
         };
     }, []);
 
+    React.useEffect(() => {
+        if (window.Blockly?.derivWorkspace) {
+            setWorkspaceReady(true);
+            return;
+        }
+        const interval = setInterval(() => {
+            if (window.Blockly?.derivWorkspace) {
+                setWorkspaceReady(true);
+                clearInterval(interval);
+            }
+        }, 200);
+        const timeout = setTimeout(() => clearInterval(interval), 30000);
+        return () => {
+            clearInterval(interval);
+            clearTimeout(timeout);
+        };
+    }, [is_loading]);
+
     if (is_loading) return null;
 
-    if (window.Blockly?.derivWorkspace)
+    if (workspace_ready && window.Blockly?.derivWorkspace)
         return (
             <React.Fragment>
                 <Toolbox />

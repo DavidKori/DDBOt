@@ -124,8 +124,18 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         }
     };
 
-    if (!symbol) return null;
     const is_connection_opened = !!chart_api?.api;
+    if (!symbol) return (
+        <div
+            className='dashboard__chart-wrapper'
+            dir='ltr'
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'var(--general-main-2, #0e1821)' }}
+        >
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', fontSize: '14px' }}>
+                Loading chart…
+            </span>
+        </div>
+    );
     return (
         <div
             className={classNames('dashboard__chart-wrapper', {

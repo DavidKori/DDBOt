@@ -111,15 +111,19 @@ export default class ChartStore {
 
             if (props) {
                 const { symbol, granularity, chart_type } = JSON.parse(props);
-                this.symbol = symbol;
+                this.symbol = symbol || 'R_100';
                 this.granularity = granularity;
                 this.chart_type = chart_type;
             } else {
+                this.symbol = 'R_100';
                 this.granularity = 0;
                 this.chart_type = 'line';
             }
         } catch {
             LocalStore.remove('bot.chart_props');
+            this.symbol = 'R_100';
+            this.granularity = 0;
+            this.chart_type = 'line';
         }
     };
 
