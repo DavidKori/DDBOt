@@ -17,7 +17,8 @@ export const redirectToLogin = (is_logged_in: boolean, language: string, has_par
 };
 
 export const redirectToSignUp = () => {
-    window.open(getStaticUrl('/signup/'));
+    const lang = localStorage.getItem('i18n_language') || 'EN';
+    window.location.replace(loginUrl({ language: lang }));
 };
 
 type TLoginUrl = {

@@ -140,6 +140,18 @@ The app renders fully in the browser preview within ~1 second of page load, show
 ### Charts Fix
 - Removed the 10-second forced timeout in `OfflineErrorBoundary` that was triggering false "Sorry for the interruption" errors when navigating to Charts
 
+### Chart WebSocket & Flutter Asset Fixes (May 2026)
+
+#### Chart API WebSocket Timing Fix
+- **Root cause**: `generateDerivApiInstance()` returns synchronously with a CONNECTING WebSocket (readyState 0). `chart_api.init()` set `this.api` immediately but the socket wasn't open yet, so `requestAPI` calls inside SmartChart queued indefinitely → "Retrieving Market Symbols..." forever.
+- **Fix** (`src/external/bot-skeleton/services/api/chart-api.js`): After assigning `this.api`, `init()` now `await`s a Promise that resolves on the WebSocket `open` event (or after a 10-second timeout). By the time `init()` resolves, the socket is truly OPEN.
+- **Chart.tsx polling** (`src/pages/chart/chart.tsx`): `useEffect` polls every 300ms for `chart_api?.api?.connection?.readyState === 1` — only sets `isConnectionOpened=true` when the socket is confirmed OPEN.
+
+#### Flutter Chart AssetManifest FormatException Fix
+- **Root cause**: The Flutter chart bootstrap (`flutter_bootstrap.js`) used `document.baseURI` (the page root `https://xxx.replit.dev/`) to resolve asset URLs. Fetching `AssetManifest.json` from the page root returned Vite's SPA fallback `index.html` instead of the actual JSON, causing `FormatException: SyntaxError: Unexpected token '<'`.
+- **Fix** (`public/js/smartcharts/chart/flutter_bootstrap.js`): Patched `_flutter.loader.load()` to include `config: { assetBase: '/js/smartcharts/chart/', entryPointBaseUrl: '/js/smartcharts/chart/' }` so Flutter resolves all assets from the correct subdirectory.
+- **Result**: `FormatException` eliminated from logs after fix; Flutter chart assets load correctly.
+
 ### MongoDB (requires Atlas IP whitelist)
 - Backend connects to MongoDB Atlas if `MONGODB_URI` is set
 - **Action required**: In MongoDB Atlas → Network Access → Add IP Address → Allow from anywhere (`0.0.0.0/0`) to unblock Replit's dynamic IP

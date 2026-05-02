@@ -110,15 +110,21 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         }
     };
 
-    const [is_connection_opened, setIsConnectionOpened] = useState(!!chart_api?.api);
+    const [is_connection_opened, setIsConnectionOpened] = useState(
+        chart_api?.api?.connection?.readyState === 1
+    );
 
     useEffect(() => {
-        if (chart_api?.api) {
+        // Must wait for the WebSocket to be truly OPEN (readyState 1),
+        // not just for chart_api.api to be assigned — the socket may still
+        // be in CONNECTING state at that point, causing requestAPI to queue
+        // indefinitely and SmartChart to stay on "Retrieving Market Symbols..."
+        if (chart_api?.api?.connection?.readyState === 1) {
             setIsConnectionOpened(true);
             return;
         }
         const poll = setInterval(() => {
-            if (chart_api?.api) {
+            if (chart_api?.api?.connection?.readyState === 1) {
                 setIsConnectionOpened(true);
                 clearInterval(poll);
             }
