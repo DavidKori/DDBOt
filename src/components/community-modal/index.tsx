@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import './community-modal.scss';
 
+const STORAGE_KEY = 'korifx_community_dismissed';
+
 const CommunityModal = () => {
-    const [visible, setVisible] = useState(true);
+    const [visible, setVisible] = useState(() => !localStorage.getItem(STORAGE_KEY));
 
     const dismiss = () => {
+        localStorage.setItem(STORAGE_KEY, '1');
         setVisible(false);
     };
 

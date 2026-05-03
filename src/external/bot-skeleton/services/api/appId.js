@@ -9,19 +9,19 @@ export const generateDerivApiInstance = () => {
     const cleanedAppId = getAppId()?.replace?.(/[^a-zA-Z0-9]/g, '') ?? getAppId();
     const socket_url = `wss://${cleanedServer}/websockets/v3?app_id=${cleanedAppId}&l=${getInitialLanguage()}&brand=${website_name.toLowerCase()}`;
     // eslint-disable-next-line no-console
-    console.log('[appId] Creating WebSocket:', socket_url);
+    console.warn('[appId] Creating WebSocket:', socket_url);
     const deriv_socket = new WebSocket(socket_url);
     deriv_socket.addEventListener('open', () => {
         // eslint-disable-next-line no-console
-        console.log('[appId] WebSocket OPEN');
+        console.warn('[appId] WebSocket OPEN');
     });
     deriv_socket.addEventListener('error', (e) => {
         // eslint-disable-next-line no-console
-        console.error('[appId] WebSocket error:', e);
+        console.warn('[appId] WebSocket error:', e);
     });
     deriv_socket.addEventListener('close', () => {
         // eslint-disable-next-line no-console
-        console.log('[appId] WebSocket closed');
+        console.warn('[appId] WebSocket closed');
     });
     const deriv_api = new DerivAPIBasic({
         connection: deriv_socket,

@@ -23,6 +23,8 @@ type TError = null | {
     };
 };
 
+/** Return whichever DerivAPIBasic connection is currently OPEN, or fall back to
+ *  whichever is instantiated so at least requests can be queued. */
 const getBestApi = () => {
     if (chart_api?.api?.connection?.readyState === 1) return chart_api.api;
     if ((api_base as any)?.api?.connection?.readyState === 1) return (api_base as any).api;
@@ -82,47 +84,45 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         if (!symbol) updateSymbol();
     }, [symbol, updateSymbol]);
 
+    /**
+     * Bootstrap the chart's own WebSocket independently of api_base so we
+     * don't block on the Firebase TMB check (which can take up to 3 s) or the
+     * api_base authorisation handshake.  chart_api.init() resolves once the
+     * socket reaches readyState 1.
+     */
     useEffect(() => {
-        const isOpen = () =>
-            chart_api?.api?.connection?.readyState === 1 ||
-            (api_base as any)?.api?.connection?.readyState === 1;
+        let cancelled = false;
 
-        if (isOpen()) {
-            // eslint-disable-next-line no-console
-            console.log('[Chart] Connection already open on mount');
+        const initChartConnection = async () => {
+            try {
+                await chart_api.init();
+            } catch (e) {
+                // eslint-disable-next-line no-console
+                console.warn('[Chart] chart_api.init() error:', e);
+            }
+
+            if (!cancelled) {
+                setIsConnectionOpened(true);
+            }
+        };
+
+        // If the connection is already open (e.g. api_base initialised first),
+        // skip the async wait and activate immediately.
+        if (chart_api?.api?.connection?.readyState === 1) {
             setIsConnectionOpened(true);
             return;
         }
 
-        // eslint-disable-next-line no-console
-        console.log('[Chart] Polling for WebSocket connection…');
-        const poll = setInterval(() => {
-            if (isOpen()) {
-                // eslint-disable-next-line no-console
-                console.log('[Chart] Connection open — activating SmartChart');
-                setIsConnectionOpened(true);
-                clearInterval(poll);
-            }
-        }, 300);
-
-        const timeout = setTimeout(() => {
-            clearInterval(poll);
-            // eslint-disable-next-line no-console
-            console.log('[Chart] Connection timeout — activating SmartChart anyway');
-            setIsConnectionOpened(true);
-        }, 8000);
+        initChartConnection();
 
         return () => {
-            clearInterval(poll);
-            clearTimeout(timeout);
+            cancelled = true;
         };
     }, []);
 
     const requestAPI = (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
         const api = getBestApi();
         if (!api) return Promise.reject(new Error('Chart API not ready'));
-        // eslint-disable-next-line no-console
-        console.log('[Chart] requestAPI:', req);
         return api.send(req);
     };
 
@@ -143,8 +143,6 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
             currentSubscriberRef.current?.unsubscribe?.();
             currentSubscriberRef.current = null;
 
-            // eslint-disable-next-line no-console
-            console.log('[Chart] requestSubscribe:', req);
             const response = await api.send(req);
             const sub_id = response?.subscription?.id;
             setChartSubscriptionId(sub_id);
@@ -164,8 +162,6 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
             }
         } catch (e) {
             if ((e as TError)?.error?.code === 'MarketIsClosed') callback([]);
-            // eslint-disable-next-line no-console
-            console.log('[Chart] requestSubscribe error:', (e as TError)?.error?.message, e);
         }
     };
 
@@ -201,7 +197,7 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
                 granularity={granularity}
                 requestAPI={requestAPI}
                 requestForget={() => {}}
-                requestForgetStream={() => {}}
+                requestForgetStream={requestForgetStream}
                 requestSubscribe={requestSubscribe}
                 settings={settings}
                 symbol={display_symbol}

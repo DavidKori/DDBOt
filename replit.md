@@ -36,7 +36,7 @@ Preferred communication style: Simple, everyday language.
 ### Chart & Community Modal Fixes (May 2026)
 
 #### Community Modal
-- **Fix** (`src/components/community-modal/index.tsx`): Changed `useState(false)` to `useState(true)` and removed the `useEffect`/`sessionStorage` gate, so the modal now appears on every page reload instead of only once per browser session.
+- **Fix** (`src/components/community-modal/index.tsx`): Modal now uses `localStorage` key `korifx_community_dismissed` — shown only on first visit, dismissed permanently when the user clicks any button or "Maybe later".
 
 #### Chart Toolbar Icons (SVG Sprite)
 - **Root cause**: `@deriv/deriv-charts` sets webpack public path `u.p = ""`, so its SVG sprite URL resolves to the page root. The sprite file `sprite-dd6387.smartcharts.svg` was missing from the `public/` folder.
@@ -53,6 +53,20 @@ Preferred communication style: Simple, everyday language.
 #### Flutter Chart Symbol Assets
 - **Root cause**: `AssetManifest.json` listed 100+ symbol PNG icons (`packages/deriv_chart/assets/icons/symbols/*.png`) that were absent from the `public/js/smartcharts/chart/assets/packages/` directory. These files are not included in the npm package distribution. Vite's SPA fallback returned `index.html` (HTML) for every missing asset, causing Flutter's Dart runtime to throw a `FormatException` when trying to parse non-JSON content.
 - **Fix**: Created transparent 1×1 placeholder PNGs for all 100 symbol icons plus `icon_placeholder.png` using Node.js, placed at `public/js/smartcharts/chart/assets/packages/deriv_chart/assets/icons/symbols/`. This eliminates the FormatException and allows the Flutter navigation widget to initialize.
+
+### Chart Flutter Asset & Timing Fix (May 2026)
+
+#### Flutter Chart Assets Missing
+- **Root cause**: `@deriv/deriv-charts` bundles a Flutter-compiled Dart app (inside `smartcharts.js`) that uses `new URL("main.dart.js", document.baseURI)` to resolve its own assets. When the app runs at `/`, Flutter expects `main.dart.js`, `flutter.js`, `flutter_bootstrap.js`, `assets/AssetManifest.json`, `assets/FontManifest.json`, etc. to be served from `/`. These files are inside `node_modules/@deriv/deriv-charts/dist/chart/` but Vite's SPA fallback was returning `index.html` (HTML) for every missing asset, causing Flutter to throw `FormatException: SyntaxError: Unexpected token '<'`.
+- **Fix**: Copied all Flutter chart files from `node_modules/@deriv/deriv-charts/dist/chart/` to `public/`: `main.dart.js` (2.3 MB), `flutter.js`, `flutter_bootstrap.js`, `flutter_service_worker.js`, `version.json`, `.last_build_id`, `assets/AssetManifest.{bin,bin.json,json}`, `assets/FontManifest.json`, `assets/fonts/` (IBMPlexSans, MaterialIcons), `assets/shaders/`, `canvaskit/canvaskit.js`. These are now served directly by Vite at the correct paths.
+
+#### Chart WebSocket Timing Race
+- **Root cause**: `chart.tsx` used an 8-second polling loop waiting for `api_base.init()` to complete before setting `isConnectionOpened=true`. But `api_base.init()` awaits a Firebase TMB check (~3s) + WebSocket auth handshake (~1s) + chart_api WebSocket (~1s) = can exceed 8s on Replit, causing SmartChart to timeout and stay blank.
+- **Fix** (`src/pages/chart/chart.tsx`): Rewrote to call `chart_api.init()` directly in its own `useEffect`, bypassing `api_base` entirely. Sets `isConnectionOpened=true` as soon as the chart's own WebSocket reaches `readyState 1` (~1s). Added `getBestApi()` helper that prefers `chart_api.api` when open, falls back to `api_base.api`.
+
+#### `onsocketclose` Listener Leak
+- **Root cause**: `chart-api.js` used `.bind(this)` inline in both `addEventListener` and `removeEventListener` calls, which creates a new function reference each time. The `removeEventListener` call never matched the previously-added listener, causing stale close handlers to fire with wrong `readyState` readings.
+- **Fix** (`src/external/bot-skeleton/services/api/chart-api.js`): Stored the bound handler as `_boundOnSocketClose = this._onSocketClose.bind(this)` at class-field initialization time; reused same reference for both add and remove. Also fixed `reconnectIfNotConnected` condition from `readyState && readyState > 1` (broken for `readyState=0` falsy) to `readyState !== undefined && readyState > 1`.
 
 ### Chart WebSocket Fix (May 2026)
 - **Root cause**: App ID 89963 is a development/test app registered on `ws.derivws.com` (Deriv's test server). Replit URLs (e.g., `*.riker.replit.dev`) are not recognized as `localhost` by `isLocal()` and not matched by `isTestLink()`, so `getSocketURL()` fell back to `blue.derivws.com` (the demo account server) which rejects dev app IDs with immediate close (`readyState: 3`).
