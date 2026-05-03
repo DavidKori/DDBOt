@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { api_base } from '@/external/bot-skeleton';
+import chart_api from '@/external/bot-skeleton/services/api/chart-api';
 import { useStore } from '@/hooks/useStore';
 import {
     ActiveSymbolsRequest,
@@ -15,12 +16,6 @@ import { useDevice } from '@deriv-com/ui';
 import ToolbarWidgets from './toolbar-widgets';
 import '@deriv/deriv-charts/dist/smartcharts.css';
 
-type TSubscription = {
-    [key: string]: null | {
-        unsubscribe?: () => void;
-    };
-};
-
 type TError = null | {
     error?: {
         code?: string;
@@ -28,13 +23,19 @@ type TError = null | {
     };
 };
 
-const subscriptions: TSubscription = {};
+const getBestApi = () => {
+    if (chart_api?.api?.connection?.readyState === 1) return chart_api.api;
+    if ((api_base as any)?.api?.connection?.readyState === 1) return (api_base as any).api;
+    return chart_api?.api ?? (api_base as any)?.api ?? null;
+};
 
 const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) => {
     const barriers: [] = [];
     const { common, ui } = useStore();
     const { chart_store, run_panel, dashboard } = useStore();
     const [isSafari, setIsSafari] = useState(false);
+    const [is_connection_opened, setIsConnectionOpened] = useState(false);
+    const currentSubscriberRef = useRef<{ unsubscribe?: () => void } | null>(null);
 
     const {
         chart_type,
@@ -53,6 +54,7 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
     const { isDesktop, isMobile } = useDevice();
     const { is_drawer_open } = run_panel;
     const { is_chart_modal_visible } = dashboard;
+
     const settings = {
         assetInformation: false,
         countdown: true,
@@ -63,14 +65,12 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
     };
 
     useEffect(() => {
-        const isSafariBrowser = () => {
-            const ua = navigator.userAgent.toLowerCase();
-            return ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1 && ua.indexOf('android') === -1;
-        };
-        setIsSafari(isSafariBrowser());
+        const ua = navigator.userAgent.toLowerCase();
+        setIsSafari(ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1 && ua.indexOf('android') === -1);
 
         return () => {
-            (api_base as any).api?.forgetAll?.('ticks');
+            currentSubscriberRef.current?.unsubscribe?.();
+            chart_api.api?.forgetAll?.('ticks');
         };
     }, []);
 
@@ -79,26 +79,48 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
     }, [chart_subscription_id]);
 
     useEffect(() => {
-        if (!symbol) {
-            updateSymbol();
-        }
+        if (!symbol) updateSymbol();
     }, [symbol, updateSymbol]);
 
-    const requestAPI = (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
-        const api = (api_base as any)?.api;
-        if (!api) {
-            const error = new Error('API not ready');
-            return Promise.reject(error);
+    useEffect(() => {
+        const isOpen = () =>
+            chart_api?.api?.connection?.readyState === 1 ||
+            (api_base as any)?.api?.connection?.readyState === 1;
+
+        if (isOpen()) {
+            // eslint-disable-next-line no-console
+            console.log('[Chart] Connection already open on mount');
+            setIsConnectionOpened(true);
+            return;
         }
-        // If requesting active_symbols but not yet populated, wait for api_base to fetch them
-        if ('active_symbols' in req && !(api_base as any)?.has_active_symbols) {
-            const waitPromise = (api_base as any)?.active_symbols_promise || Promise.resolve();
-            return waitPromise.then(() => {
+
+        // eslint-disable-next-line no-console
+        console.log('[Chart] Polling for WebSocket connection…');
+        const poll = setInterval(() => {
+            if (isOpen()) {
                 // eslint-disable-next-line no-console
-                console.log('[Chart] requestAPI after active_symbols ready:', req);
-                return api.send(req);
-            });
-        }
+                console.log('[Chart] Connection open — activating SmartChart');
+                setIsConnectionOpened(true);
+                clearInterval(poll);
+            }
+        }, 300);
+
+        const timeout = setTimeout(() => {
+            clearInterval(poll);
+            // eslint-disable-next-line no-console
+            console.log('[Chart] Connection timeout — activating SmartChart anyway');
+            setIsConnectionOpened(true);
+        }, 8000);
+
+        return () => {
+            clearInterval(poll);
+            clearTimeout(timeout);
+        };
+    }, []);
+
+    const requestAPI = (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
+        const api = getBestApi();
+        if (!api) return Promise.reject(new Error('Chart API not ready'));
         // eslint-disable-next-line no-console
         console.log('[Chart] requestAPI:', req);
         return api.send(req);
@@ -106,41 +128,47 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
 
     const requestForgetStream = (subscription_id: string) => {
         if (subscription_id) {
-            const api = (api_base as any)?.api;
+            const api = getBestApi();
             api?.forget?.(subscription_id);
         }
     };
 
     const requestSubscribe = async (req: TicksStreamRequest, callback: (data: any) => void) => {
-        const api = (api_base as any)?.api;
+        const api = getBestApi();
         if (!api) return;
         try {
-            requestForgetStream(chartSubscriptionIdRef.current);
-            const history = await api.send(req);
-            const sub_id = history?.subscription?.id;
+            if (chartSubscriptionIdRef.current) {
+                requestForgetStream(chartSubscriptionIdRef.current);
+            }
+            currentSubscriberRef.current?.unsubscribe?.();
+            currentSubscriberRef.current = null;
+
+            // eslint-disable-next-line no-console
+            console.log('[Chart] requestSubscribe:', req);
+            const response = await api.send(req);
+            const sub_id = response?.subscription?.id;
             setChartSubscriptionId(sub_id);
-            if (history) callback(history);
+
+            if (response) callback(response);
+
             if (req.subscribe === 1 && sub_id) {
-                subscriptions[sub_id] = api
+                const subscriber = api
                     .onMessage()
                     ?.subscribe(({ data }: { data: TicksHistoryResponse }) => {
                         const msg_sub_id = (data as any)?.subscription?.id;
-                        if (!msg_sub_id || msg_sub_id === sub_id) {
+                        if (msg_sub_id === sub_id) {
                             callback(data);
                         }
                     });
+                currentSubscriberRef.current = subscriber ?? null;
             }
         } catch (e) {
-            (e as TError)?.error?.code === 'MarketIsClosed' && callback([]);
+            if ((e as TError)?.error?.code === 'MarketIsClosed') callback([]);
             // eslint-disable-next-line no-console
-            console.log('[Chart] error:', (e as TError)?.error?.message);
+            console.log('[Chart] requestSubscribe error:', (e as TError)?.error?.message, e);
         }
     };
 
-    // Enable chart to render immediately — requestAPI handles waiting for API
-    const [is_connection_opened] = useState(true);
-
-    // Use symbol from store or fallback to R_100 immediately
     const display_symbol = symbol || 'R_100';
 
     return (

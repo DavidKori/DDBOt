@@ -42,6 +42,14 @@ Preferred communication style: Simple, everyday language.
 - **Root cause**: `@deriv/deriv-charts` sets webpack public path `u.p = ""`, so its SVG sprite URL resolves to the page root. The sprite file `sprite-dd6387.smartcharts.svg` was missing from the `public/` folder.
 - **Fix**: Copied `node_modules/@deriv/deriv-charts/dist/sprite-dd6387.smartcharts.svg` → `public/sprite-dd6387.smartcharts.svg` (625 KB). Toolbar icons (zoom, chart type, draw tools) now load correctly.
 
+#### Chart Graph Not Rendering (React Effect Order Race Condition)
+- **Root cause**: React runs child `useEffect` hooks **before** parent effects. The `Chart` component (child) had `isConnectionOpened = useState(true)` — hardcoded `true` — which told SmartCharts to start making API calls immediately. But `AppRoot` (parent) calls `api_base.init()` in its own `useEffect`, which runs **after** the chart's. So when SmartCharts called `requestAPI({active_symbols: 'brief'})`, `api_base.api` was still `null`, causing an immediate `Promise.reject`. SmartCharts received a failed promise on its first call and never retried, leaving the chart blank indefinitely.
+- **Fix** (`src/pages/chart/chart.tsx`):
+  1. Re-imported `chart_api` (the dedicated chart WebSocket connection) and added `getBestApi()` helper that prefers `chart_api.api` when open, falls back to `api_base.api`, then falls back to whichever exists.
+  2. Replaced `isConnectionOpened = useState(true)` with a polling `useEffect` that checks `readyState === 1` every 300 ms. Once either `chart_api.api` or `api_base.api` reaches `readyState 1` (WebSocket open), it sets `isConnectionOpened = true`, which signals SmartCharts to begin loading. Hard 8-second timeout fallback in case of very slow connections.
+  3. Simplified `requestAPI` to call `getBestApi().send(req)` directly — no complex active-symbols wait logic that could hang. DerivAPIBasic queues requests internally until the socket is open.
+  4. Fixed `requestSubscribe` to clean up the previous `onMessage()` listener via `currentSubscriberRef` before creating a new subscription, preventing listener leaks on symbol change.
+
 #### Flutter Chart Symbol Assets
 - **Root cause**: `AssetManifest.json` listed 100+ symbol PNG icons (`packages/deriv_chart/assets/icons/symbols/*.png`) that were absent from the `public/js/smartcharts/chart/assets/packages/` directory. These files are not included in the npm package distribution. Vite's SPA fallback returned `index.html` (HTML) for every missing asset, causing Flutter's Dart runtime to throw a `FormatException` when trying to parse non-JSON content.
 - **Fix**: Created transparent 1×1 placeholder PNGs for all 100 symbol icons plus `icon_placeholder.png` using Node.js, placed at `public/js/smartcharts/chart/assets/packages/deriv_chart/assets/icons/symbols/`. This eliminates the FormatException and allows the Flutter navigation widget to initialize.
