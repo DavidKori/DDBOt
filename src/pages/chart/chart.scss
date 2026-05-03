@@ -1,17 +1,5 @@
 @use 'components/shared/styles/mixins' as *;
 
-.ic-icon {
-    svg {
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-        min-width: 16px !important;
-        min-height: 16px !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-}
-
 .bot {
     &__chart-container {
         position: relative;
