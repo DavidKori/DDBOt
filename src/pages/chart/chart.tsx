@@ -135,26 +135,31 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         }
     };
 
-    // Start with true — api_base is initializing in parallel in AppRoot
-    // If connection fails, SmartChart will handle the error gracefully
-    const [is_connection_opened, setIsConnectionOpened] = useState(true);
+    // Wait for api_base to initialize and connect
+    const [is_connection_opened, setIsConnectionOpened] = useState(false);
 
     useEffect(() => {
-        const isConnected = () => (api_base as any)?.api?.connection?.readyState === 1;
-
-        if (isConnected()) {
-            setIsConnectionOpened(true);
-            return;
-        }
-
-        const poll = setInterval(() => {
-            if (isConnected()) {
+        let mounted = true;
+        
+        const checkConnection = () => {
+            if (!mounted) return;
+            
+            const isReady = (api_base as any)?.api?.connection?.readyState === 1 && 
+                           (api_base as any)?.has_active_symbols;
+            
+            if (isReady) {
                 setIsConnectionOpened(true);
-                clearInterval(poll);
+            } else {
+                // Keep polling until both conditions are met
+                setTimeout(checkConnection, 500);
             }
-        }, 300);
-
-        return () => clearInterval(poll);
+        };
+        
+        checkConnection();
+        
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     if (!symbol) return (
