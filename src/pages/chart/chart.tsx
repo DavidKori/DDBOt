@@ -123,10 +123,9 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         }
     };
 
-    // Check if api_base is connected
-    const [is_connection_opened, setIsConnectionOpened] = useState(
-        (api_base as any)?.api?.connection?.readyState === 1
-    );
+    // Start with true — api_base is initializing in parallel in AppRoot
+    // If connection fails, SmartChart will handle the error gracefully
+    const [is_connection_opened, setIsConnectionOpened] = useState(true);
 
     useEffect(() => {
         const isConnected = () => (api_base as any)?.api?.connection?.readyState === 1;
