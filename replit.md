@@ -33,6 +33,13 @@ Preferred communication style: Simple, everyday language.
 - **Performance**: Optimized rendering with eager imports for critical components and reduced loading timeouts.
 - **Error Handling**: Enhanced error tracking with TrackJS and robust error boundary implementations.
 
+### Chart WebSocket Fix (May 2026)
+- **Root cause**: App ID 89963 is a development/test app registered on `ws.derivws.com` (Deriv's test server). Replit URLs (e.g., `*.riker.replit.dev`) are not recognized as `localhost` by `isLocal()` and not matched by `isTestLink()`, so `getSocketURL()` fell back to `blue.derivws.com` (the demo account server) which rejects dev app IDs with immediate close (`readyState: 3`).
+- **Fix 1** (`index.html`): Seeds `localStorage.setItem('config.server_url', 'ws.derivws.com')` and `localStorage.setItem('config.app_id', '89963')` unconditionally on every page load, ensuring any stale/wrong server URL from prior sessions is overwritten.
+- **Fix 2** (`src/components/shared/utils/config/config.ts`): Updated `isTestLink()` to also recognize `*.replit.dev` and `*.replit.app` hostnames, so `getSocketURL()` and `getAppId()` correctly return the test server and test app ID for Replit environments.
+- **Fix 3** (`src/external/bot-skeleton/services/api/chart-api.js`): Cleaned up the WebSocket open-wait Promise to use a single `settled` flag and `clearTimeout()`, eliminating the duplicate-resolve race condition that caused spurious "timeout" log warnings even when the socket opened successfully.
+- **No credentials required**: No new environment variables or API keys needed. The fix is purely about using the correct Deriv WebSocket server for the registered app ID.
+
 ## External Dependencies
 
 ### Deriv Ecosystem Packages

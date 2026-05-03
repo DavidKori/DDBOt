@@ -28,27 +28,29 @@ class ChartAPI {
             if (conn && conn.readyState !== 1) {
                 await new Promise(resolve => {
                     if (conn.readyState === 1) return resolve();
-                    const onOpen = () => {
+                    let settled = false;
+                    let timer;
+                    const done = (label) => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(timer);
+                        conn.removeEventListener('open', onOpen);
+                        conn.removeEventListener('error', onError);
                         // eslint-disable-next-line no-console
-                        console.log('[chart_api] WebSocket OPEN ✓');
+                        console.log('[chart_api]', label, '— readyState:', conn.readyState);
                         resolve();
                     };
+                    const onOpen = () => done('WebSocket OPEN ✓');
                     const onError = (e) => {
                         // eslint-disable-next-line no-console
                         console.warn('[chart_api] WebSocket error:', e);
-                        resolve(); // resolve anyway so we don't block forever
+                        done('WebSocket error — resolving anyway');
                     };
                     conn.addEventListener('open', onOpen, { once: true });
                     conn.addEventListener('error', onError, { once: true });
                     // 10-second hard timeout — if the socket can't connect in 10s,
                     // chart.tsx will fall back to api_base anyway.
-                    setTimeout(() => {
-                        conn.removeEventListener('open', onOpen);
-                        conn.removeEventListener('error', onError);
-                        // eslint-disable-next-line no-console
-                        console.warn('[chart_api] WebSocket open timeout (10s) — readyState:', conn.readyState);
-                        resolve();
-                    }, 10000);
+                    timer = setTimeout(() => done('WebSocket open timeout (10s)'), 10000);
                 });
             } else {
                 // eslint-disable-next-line no-console

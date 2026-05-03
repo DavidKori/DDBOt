@@ -100,6 +100,13 @@
                     if (!localStorage.getItem('config.app_id')) {
                         localStorage.setItem('config.app_id', '89963');
                     }
+                    // Force ws.derivws.com (test/dev server) — app_id 89963 is registered
+                    // on this server. Without this, Replit URLs resolve to blue.derivws.com
+                    // (the demo account server) which rejects dev app_ids, causing the chart
+                    // WebSocket to immediately close (readyState 3) and symbols never load.
+                    // Always overwrite to ensure stale/wrong values from prior sessions don't persist.
+                    localStorage.setItem('config.server_url', 'ws.derivws.com');
+                    localStorage.setItem('config.app_id', '89963');
                 } catch(e) {}
             })();
         </script>
