@@ -33,6 +33,19 @@ Preferred communication style: Simple, everyday language.
 - **Performance**: Optimized rendering with eager imports for critical components and reduced loading timeouts.
 - **Error Handling**: Enhanced error tracking with TrackJS and robust error boundary implementations.
 
+### Chart & Community Modal Fixes (May 2026)
+
+#### Community Modal
+- **Fix** (`src/components/community-modal/index.tsx`): Changed `useState(false)` to `useState(true)` and removed the `useEffect`/`sessionStorage` gate, so the modal now appears on every page reload instead of only once per browser session.
+
+#### Chart Toolbar Icons (SVG Sprite)
+- **Root cause**: `@deriv/deriv-charts` sets webpack public path `u.p = ""`, so its SVG sprite URL resolves to the page root. The sprite file `sprite-dd6387.smartcharts.svg` was missing from the `public/` folder.
+- **Fix**: Copied `node_modules/@deriv/deriv-charts/dist/sprite-dd6387.smartcharts.svg` → `public/sprite-dd6387.smartcharts.svg` (625 KB). Toolbar icons (zoom, chart type, draw tools) now load correctly.
+
+#### Flutter Chart Symbol Assets
+- **Root cause**: `AssetManifest.json` listed 100+ symbol PNG icons (`packages/deriv_chart/assets/icons/symbols/*.png`) that were absent from the `public/js/smartcharts/chart/assets/packages/` directory. These files are not included in the npm package distribution. Vite's SPA fallback returned `index.html` (HTML) for every missing asset, causing Flutter's Dart runtime to throw a `FormatException` when trying to parse non-JSON content.
+- **Fix**: Created transparent 1×1 placeholder PNGs for all 100 symbol icons plus `icon_placeholder.png` using Node.js, placed at `public/js/smartcharts/chart/assets/packages/deriv_chart/assets/icons/symbols/`. This eliminates the FormatException and allows the Flutter navigation widget to initialize.
+
 ### Chart WebSocket Fix (May 2026)
 - **Root cause**: App ID 89963 is a development/test app registered on `ws.derivws.com` (Deriv's test server). Replit URLs (e.g., `*.riker.replit.dev`) are not recognized as `localhost` by `isLocal()` and not matched by `isTestLink()`, so `getSocketURL()` fell back to `blue.derivws.com` (the demo account server) which rejects dev app IDs with immediate close (`readyState: 3`).
 - **Fix 1** (`index.html`): Seeds `localStorage.setItem('config.server_url', 'ws.derivws.com')` and `localStorage.setItem('config.app_id', '89963')` unconditionally on every page load, ensuring any stale/wrong server URL from prior sessions is overwritten.
