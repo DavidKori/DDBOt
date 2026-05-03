@@ -79,7 +79,9 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
     }, [chart_subscription_id]);
 
     useEffect(() => {
-        if (!symbol) updateSymbol();
+        if (!symbol) {
+            updateSymbol();
+        }
     }, [symbol, updateSymbol]);
 
     const requestAPI = (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
@@ -135,44 +137,11 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         }
     };
 
-    // Wait for api_base to initialize and connect
-    const [is_connection_opened, setIsConnectionOpened] = useState(false);
+    // Enable chart to render immediately — requestAPI handles waiting for API
+    const [is_connection_opened] = useState(true);
 
-    useEffect(() => {
-        let mounted = true;
-        
-        const checkConnection = () => {
-            if (!mounted) return;
-            
-            const isReady = (api_base as any)?.api?.connection?.readyState === 1 && 
-                           (api_base as any)?.has_active_symbols;
-            
-            if (isReady) {
-                setIsConnectionOpened(true);
-            } else {
-                // Keep polling until both conditions are met
-                setTimeout(checkConnection, 500);
-            }
-        };
-        
-        checkConnection();
-        
-        return () => {
-            mounted = false;
-        };
-    }, []);
-
-    if (!symbol) return (
-        <div
-            className='dashboard__chart-wrapper'
-            dir='ltr'
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'var(--general-main-2, #0e1821)' }}
-        >
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', fontSize: '14px' }}>
-                Loading chart…
-            </span>
-        </div>
-    );
+    // Use symbol from store or fallback to R_100 immediately
+    const display_symbol = symbol || 'R_100';
 
     return (
         <div
@@ -207,7 +176,7 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
                 requestForgetStream={() => {}}
                 requestSubscribe={requestSubscribe}
                 settings={settings}
-                symbol={symbol}
+                symbol={display_symbol}
                 topWidgets={() => <ChartTitle onChange={onSymbolChange} />}
                 isConnectionOpened={is_connection_opened}
                 getMarketsOrder={getMarketsOrder}
