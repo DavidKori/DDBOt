@@ -1,0 +1,142 @@
+sw.js:144 [SW] Request handling failed: TypeError: Failed to execute 'put' on 'Cache': Partial response (status code 206) is unsupported
+    at handleStaticAsset (sw.js:211:25)
+    at async handleRequest (sw.js:137:20)
+handleRequest @ sw.js:144Understand this error
+sw.js:289 [SW] Providing offline fallback for: http://localhost:5000/assets/media/click.mp3
+sw.js:144 [SW] Request handling failed: TypeError: Failed to execute 'put' on 'Cache': Partial response (status code 206) is unsupported
+    at handleStaticAsset (sw.js:211:25)
+    at async handleRequest (sw.js:137:20)
+handleRequest @ sw.js:144Understand this error
+sw.js:289 [SW] Providing offline fallback for: http://localhost:5000/assets/media/disconnect.wav
+sw.js:217 [SW] Static asset failed: TypeError: Failed to execute 'put' on 'Cache': Partial response (status code 206) is unsupported
+    at handleStaticAsset (sw.js:211:25)
+    at async handleRequest (sw.js:137:20)
+sw.js:144 [SW] Request handling failed: TypeError: Failed to execute 'put' on 'Cache': Partial response (status code 206) is unsupported
+    at handleStaticAsset (sw.js:211:25)
+    at async handleRequest (sw.js:137:20)
+handleRequest @ sw.js:144Understand this error
+sw.js:289 [SW] Providing offline fallback for: http://localhost:5000/assets/media/delete.mp3
+sw.js:109 [SW] Skipping API request: /v3.6/customer/action/get_dynamic_configuration
+:5000/assets/media/click.mp3:1  Failed to load resource: the server responded with a status of 503 (Service Unavailable)Understand this error
+:5000/assets/media/disconnect.wav:1  Failed to load resource: the server responded with a status of 503 (Service Unavailable)Understand this error
+:5000/assets/media/delete.mp3:1  Failed to load resource: the server responded with a status of 503 (Service Unavailable)Understand this error
+sw.js:97 [SW] Skipping JS/CSS chunk: /gtm.js
+sw.js:97 [SW] Skipping JS/CSS chunk: /tracking/m2oe.js
+sw.js:130 [SW] Handling request: /gtag/js
+sw.js:264 [SW] Handling generic request: https://www.googletagmanager.com/gtag/js?id=G-R0D2Z1965W&cx=c&gtm=4e64t1
+sw.js:130 [SW] Handling request: /gtag/destination
+sw.js:264 [SW] Handling generic request: https://www.googletagmanager.com/gtag/destination?id=AW-11002970957&cx=c&gtm=4e64t1
+sw.js:109 [SW] Skipping API request: /v3.6/customer/action/get_configuration
+sw.js:130 [SW] Handling request: /log/cnv
+sw.js:264 [SW] Handling generic request: https://cnv.event.prod.bidr.io/log/cnv?tag_id=116&buzz_key=match2one&segment_key=match2one-132&ord=878063696
+sw.js:109 [SW] Skipping API request: /v3.6/customer/action/get_localization
+sw.js:97 [SW] Skipping JS/CSS chunk: /js/smartcharts/flutter-chart-adapter-4b4e50.smartcharts.js
+react-dom-C6uz8Mp6.js?v=42044b2c:445 Warning: My: Support for defaultProps will be removed from memo components in a future major release. Use JavaScript default parameters instead.
+    at div
+    at div
+    at div
+    at div
+    at div
+    at div
+    at l (http://localhost:5000/node_modules/.vite/deps/@deriv_deriv-charts.js?v=42044b2c:6516:7)
+    at http://localhost:5000/node_modules/.vite/deps/@deriv_deriv-charts.js?v=42044b2c:16069:45
+    at div
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at Suspense
+    at div
+    at div
+    at Tabs (http://localhost:5000/src/components/shared_ui/tabs/tabs.tsx:10:17)
+    at div
+    at div
+    at div
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at div
+    at j$3 (http://localhost:5000/node_modules/.vite/deps/@deriv-com_quill-ui.js?v=42044b2c:17519:24)
+    at AuthLoadingWrapper (http://localhost:5000/src/components/auth-loading-wrapper/index.tsx:8:31)
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at ErrorBoundary (http://localhost:5000/src/components/error-component/error-boundary.jsx:8:3)
+    at Suspense
+    at AppRoot (http://localhost:5000/src/app/app-root.tsx:49:16)
+    at RenderedRoute (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3332:8)
+    at Outlet (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3703:25)
+    at div
+    at MainBody (http://localhost:5000/src/components/layout/main-body/index.tsx:8:21)
+    at div
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at StoreProvider (http://localhost:5000/src/hooks/useStore.tsx:16:26)
+    at p$1 (http://localhost:5000/node_modules/.vite/deps/@deriv-com_translations.js?v=42044b2c:2839:14)
+    at P (http://localhost:5000/node_modules/.vite/deps/@deriv-com_translations.js?v=42044b2c:2847:27)
+    at Suspense
+    at SuspenseWrapper (http://localhost:5000/src/app/App.tsx:28:28)
+    at RenderedRoute (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3332:8)
+    at RenderErrorBoundary (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3299:3)
+    at DataRoutes (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:4395:8)
+    at Router (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3723:18)
+    at RouterProvider (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:4227:8)
+    at App (http://localhost:5000/src/app/App.tsx:149:38)
+    at AuthWrapper (http://localhost:5000/src/app/AuthWrapper.tsx:82:52)
+    at ErrorBoundary (http://localhost:5000/src/main.tsx:13:3)
+printWarning @ react-dom-C6uz8Mp6.js?v=42044b2c:445Understand this error
+chart.tsx:89 [Chart] requestAPI: Object
+sw.js:97 [SW] Skipping JS/CSS chunk: /assets/FontManifest.json
+flutter-chart-adapter-4b4e50.smartcharts.js:1 Rejecting promise with error: FormatException: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+$1 @ flutter-chart-adapter-4b4e50.smartcharts.js:1Understand this warning
+@deriv_deriv-charts.js?v=42044b2c:13646 Uncaught (in promise) nullUnderstand this error
+chart.tsx:89 [Chart] requestAPI: Object
+chart.tsx:89 [Chart] requestAPI: Object
+sw.js:130 [SW] Handling request: /js/smartcharts/sprite-dd6387.smartcharts.svg
+sw.js:196 [SW] Handling static asset: http://localhost:5000/js/smartcharts/sprite-dd6387.smartcharts.svg#ic-scale-full-usage
+sw.js:201 [SW] Serving static asset from cache
+react-dom-C6uz8Mp6.js?v=42044b2c:445 Warning: Zv: Support for defaultProps will be removed from memo components in a future major release. Use JavaScript default parameters instead.
+    at div
+    at l (http://localhost:5000/node_modules/.vite/deps/@deriv_deriv-charts.js?v=42044b2c:6516:7)
+    at ToolbarWidgets (http://localhost:5000/src/pages/chart/toolbar-widgets.tsx:5:27)
+    at toolbarWidget
+    at div
+    at div
+    at div
+    at div
+    at div
+    at div
+    at l (http://localhost:5000/node_modules/.vite/deps/@deriv_deriv-charts.js?v=42044b2c:6516:7)
+    at http://localhost:5000/node_modules/.vite/deps/@deriv_deriv-charts.js?v=42044b2c:16069:45
+    at div
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at Suspense
+    at div
+    at div
+    at Tabs (http://localhost:5000/src/components/shared_ui/tabs/tabs.tsx:10:17)
+    at div
+    at div
+    at div
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at div
+    at j$3 (http://localhost:5000/node_modules/.vite/deps/@deriv-com_quill-ui.js?v=42044b2c:17519:24)
+    at AuthLoadingWrapper (http://localhost:5000/src/components/auth-loading-wrapper/index.tsx:8:31)
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at ErrorBoundary (http://localhost:5000/src/components/error-component/error-boundary.jsx:8:3)
+    at Suspense
+    at AppRoot (http://localhost:5000/src/app/app-root.tsx:49:16)
+    at RenderedRoute (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3332:8)
+    at Outlet (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3703:25)
+    at div
+    at MainBody (http://localhost:5000/src/components/layout/main-body/index.tsx:8:21)
+    at div
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at http://localhost:5000/node_modules/.vite/deps/mobx-react-lite.js?v=42044b2c:230:10
+    at StoreProvider (http://localhost:5000/src/hooks/useStore.tsx:16:26)
+    at p$1 (http://localhost:5000/node_modules/.vite/deps/@deriv-com_translations.js?v=42044b2c:2839:14)
+    at P (http://localhost:5000/node_modules/.vite/deps/@deriv-com_translations.js?v=42044b2c:2847:27)
+    at Suspense
+    at SuspenseWrapper (http://localhost:5000/src/app/App.tsx:28:28)
+    at RenderedRoute (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3332:8)
+    at RenderErrorBoundary (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3299:3)
+    at DataRoutes (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:4395:8)
+    at Router (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:3723:18)
+    at RouterProvider (http://localhost:5000/node_modules/.vite/deps/react-router-dom.js?v=42044b2c:4227:8)
+    at App (http://localhost:5000/src/app/App.tsx:149:38)
+    at AuthWrapper (http://localhost:5000/src/app/AuthWrapper.tsx:82:52)
+    at ErrorBoundary (http://localhost:5000/src/main.tsx:13:3)

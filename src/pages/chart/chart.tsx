@@ -84,7 +84,19 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
 
     const requestAPI = (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
         const api = (api_base as any)?.api;
-        if (!api) return Promise.reject(new Error('API not ready'));
+        if (!api) {
+            const error = new Error('API not ready');
+            return Promise.reject(error);
+        }
+        // If requesting active_symbols but not yet populated, wait for api_base to fetch them
+        if ('active_symbols' in req && !(api_base as any)?.has_active_symbols) {
+            const waitPromise = (api_base as any)?.active_symbols_promise || Promise.resolve();
+            return waitPromise.then(() => {
+                // eslint-disable-next-line no-console
+                console.log('[Chart] requestAPI after active_symbols ready:', req);
+                return api.send(req);
+            });
+        }
         // eslint-disable-next-line no-console
         console.log('[Chart] requestAPI:', req);
         return api.send(req);
