@@ -112,12 +112,23 @@ class APIBase {
         if (this.time_interval) clearInterval(this.time_interval);
         this.time_interval = null;
 
-        if (V2GetActiveToken()) {
+        const has_token = V2GetActiveToken();
+        // eslint-disable-next-line no-console
+        console.log('[API-BASE] init: has_token:', has_token);
+        if (has_token) {
             setIsAuthorizing(true);
+            // eslint-disable-next-line no-console
+            console.log('[API-BASE] Starting authorization...');
             await this.authorizeAndSubscribe();
+            // eslint-disable-next-line no-console
+            console.log('[API-BASE] Authorization complete');
         }
 
+        // eslint-disable-next-line no-console
+        console.log('[API-BASE] About to await chart_api.init');
         await chart_api.init(force_create_connection);
+        // eslint-disable-next-line no-console
+        console.log('[API-BASE] chart_api.init complete, api readyState:', chart_api?.api?.connection?.readyState);
     }
 
     getConnectionStatus() {
