@@ -1,22 +1,10 @@
 import { useEffect, useState } from 'react';
 import './community-modal.scss';
 
-const STORAGE_KEY = 'korifx_community_shown';
-
 const CommunityModal = () => {
-    const [visible, setVisible] = useState(false);
-
-    useEffect(() => {
-        // Use sessionStorage so the modal reappears on every new browser session
-        if (!sessionStorage.getItem(STORAGE_KEY)) {
-            setVisible(true);
-        }
-    }, []);
+    const [visible, setVisible] = useState(true);
 
     const dismiss = () => {
-        sessionStorage.setItem(STORAGE_KEY, '1');
-        // Also clear old localStorage key if present
-        localStorage.removeItem(STORAGE_KEY);
         setVisible(false);
     };
 

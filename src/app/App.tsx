@@ -128,7 +128,7 @@ function App() {
     return (
         <>
             {showLoader && <KoriFxLoader onDone={handleLoaderDone} />}
-            {showCommunity && <CommunityModal />}
+            <CommunityModal />
             <RouterProvider router={router} />
         </>
     );

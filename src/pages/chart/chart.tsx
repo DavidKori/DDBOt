@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { api_base } from '@/external/bot-skeleton';
-import chart_api from '@/external/bot-skeleton/services/api/chart-api';
 import { useStore } from '@/hooks/useStore';
 import {
     ActiveSymbolsRequest,
@@ -30,14 +29,6 @@ type TError = null | {
 };
 
 const subscriptions: TSubscription = {};
-
-// Returns the best available API: chart_api if its socket is OPEN, else api_base
-const getBestApi = () => {
-    if (chart_api?.api?.connection?.readyState === 1) return chart_api.api;
-    if ((api_base as any)?.api?.connection?.readyState === 1) return (api_base as any).api;
-    // Fallback: return whatever exists even if not fully open
-    return chart_api?.api ?? (api_base as any)?.api ?? null;
-};
 
 const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) => {
     const barriers: [] = [];
@@ -79,7 +70,7 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         setIsSafari(isSafariBrowser());
 
         return () => {
-            chart_api.api?.forgetAll?.('ticks');
+            (api_base as any).api?.forgetAll?.('ticks');
         };
     }, []);
 
@@ -92,22 +83,22 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
     }, [symbol, updateSymbol]);
 
     const requestAPI = (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
-        const api = getBestApi();
-        if (!api) return Promise.reject(new Error('Chart API not ready'));
+        const api = (api_base as any)?.api;
+        if (!api) return Promise.reject(new Error('API not ready'));
         // eslint-disable-next-line no-console
-        console.log('[Chart] requestAPI via', chart_api?.api?.connection?.readyState === 1 ? 'chart_api' : 'api_base', req);
+        console.log('[Chart] requestAPI:', req);
         return api.send(req);
     };
 
     const requestForgetStream = (subscription_id: string) => {
         if (subscription_id) {
-            const api = getBestApi();
+            const api = (api_base as any)?.api;
             api?.forget?.(subscription_id);
         }
     };
 
     const requestSubscribe = async (req: TicksStreamRequest, callback: (data: any) => void) => {
-        const api = getBestApi();
+        const api = (api_base as any)?.api;
         if (!api) return;
         try {
             requestForgetStream(chartSubscriptionIdRef.current);
@@ -119,7 +110,6 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
                 subscriptions[sub_id] = api
                     .onMessage()
                     ?.subscribe(({ data }: { data: TicksHistoryResponse }) => {
-                        // Filter: only pass messages for this subscription ID
                         const msg_sub_id = (data as any)?.subscription?.id;
                         if (!msg_sub_id || msg_sub_id === sub_id) {
                             callback(data);
@@ -129,40 +119,29 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         } catch (e) {
             (e as TError)?.error?.code === 'MarketIsClosed' && callback([]);
             // eslint-disable-next-line no-console
-            console.log('[Chart] requestSubscribe error:', (e as TError)?.error?.message);
+            console.log('[Chart] error:', (e as TError)?.error?.message);
         }
     };
 
-    // Poll until either chart_api or api_base has an open WebSocket connection.
-    // We check both so that if chart_api's socket is slow to open we don't block
-    // the chart — api_base is guaranteed to be connected once the app is running.
-    const [is_connection_opened, setIsConnectionOpened] = useState(false);
+    // Check if api_base is connected
+    const [is_connection_opened, setIsConnectionOpened] = useState(
+        (api_base as any)?.api?.connection?.readyState === 1
+    );
 
     useEffect(() => {
-        const isConnected = () =>
-            chart_api?.api?.connection?.readyState === 1 ||
-            (api_base as any)?.api?.connection?.readyState === 1;
+        const isConnected = () => (api_base as any)?.api?.connection?.readyState === 1;
 
         if (isConnected()) {
-            // eslint-disable-next-line no-console
-            console.log('[Chart] Connection already open on mount');
             setIsConnectionOpened(true);
             return;
         }
 
-        // eslint-disable-next-line no-console
-        console.log('[Chart] Waiting for connection… chart_api readyState:', chart_api?.api?.connection?.readyState, 'api_base readyState:', (api_base as any)?.api?.connection?.readyState);
-
         const poll = setInterval(() => {
-            const chartState = chart_api?.api?.connection?.readyState;
-            const baseState = (api_base as any)?.api?.connection?.readyState;
-            // eslint-disable-next-line no-console
-            console.log('[Chart] poll — chart_api:', chartState, 'api_base:', baseState);
-            if (chartState === 1 || baseState === 1) {
+            if (isConnected()) {
                 setIsConnectionOpened(true);
                 clearInterval(poll);
             }
-        }, 500);
+        }, 300);
 
         return () => clearInterval(poll);
     }, []);
