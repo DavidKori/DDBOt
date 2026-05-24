@@ -31,6 +31,12 @@ function inlineSpritePlugin() {
                     return html;
                 }
 
+                // Strip the sprite's internal <style> block — it contains
+                // ".sprite-symbol-usage { display: none }" which hides ALL
+                // -usage <use> elements when the sprite is inlined in the host
+                // document (the CSS would cascade into every <use> instance).
+                spriteContent = spriteContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
                 // Make the inlined SVG invisible and non-interactive
                 spriteContent = spriteContent.replace(
                     /^<svg /,
