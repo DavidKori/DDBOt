@@ -11,10 +11,12 @@ import {
     TicksStreamRequest,
     TradingTimesRequest,
 } from '@deriv/api-types';
-import { ChartTitle, SmartChart } from '@deriv/deriv-charts';
+import { ChartTitle, SmartChart, setSmartChartsPublicPath } from '@deriv/deriv-charts';
 import { useDevice } from '@deriv-com/ui';
 import ToolbarWidgets from './toolbar-widgets';
 import '@deriv/deriv-charts/dist/smartcharts.css';
+
+setSmartChartsPublicPath('/');
 
 type TError = null | {
     error?: {
