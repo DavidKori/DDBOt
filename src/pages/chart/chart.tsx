@@ -16,7 +16,6 @@ import { useDevice } from '@deriv-com/ui';
 import ToolbarWidgets from './toolbar-widgets';
 import '@deriv/deriv-charts/dist/smartcharts.css';
 
-setSmartChartsPublicPath('/');
 
 type TError = null | {
     error?: {

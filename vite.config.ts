@@ -17,6 +17,66 @@ function rawPlugin() {
     };
 }
 
+function inlineSpritePlugin() {
+    return {
+        name: 'inline-smartcharts-sprite',
+        transformIndexHtml: {
+            order: 'pre' as const,
+            handler(html: string) {
+                const spritePath = path.resolve(__dirname, 'public/sprite-dd6387.smartcharts.svg');
+                let spriteContent: string;
+                try {
+                    spriteContent = fs.readFileSync(spritePath, 'utf-8');
+                } catch {
+                    return html;
+                }
+
+                // Make the inlined SVG invisible and non-interactive
+                spriteContent = spriteContent.replace(
+                    /^<svg /,
+                    '<svg id="sc-inline-sprite" aria-hidden="true" focusable="false" style="display:none;position:absolute;width:0;height:0;overflow:hidden" '
+                );
+
+                // MutationObserver script: rewrites <use> xlink:href="sprite-dd6387.smartcharts.svg#id"
+                // to href="#id" so it resolves against the inlined sprite, not an external file.
+                const patchScript = `<script>
+(function(){
+  var SPRITE_FILE='sprite-dd6387.smartcharts.svg';
+  var XNS='http://www.w3.org/1999/xlink';
+  function fix(el){
+    var h=el.getAttributeNS(XNS,'href')||el.getAttribute('href')||'';
+    if(h.indexOf(SPRITE_FILE+'#')!==-1){
+      var frag='#'+h.split('#')[1];
+      el.removeAttributeNS(XNS,'href');
+      el.setAttribute('href',frag);
+    }
+  }
+  function scan(root){
+    if(root&&root.querySelectorAll)root.querySelectorAll('use').forEach(fix);
+  }
+  new MutationObserver(function(ms){
+    ms.forEach(function(m){
+      m.addedNodes.forEach(function(n){
+        if(n.nodeType!==1)return;
+        if(n.localName==='use')fix(n);
+        scan(n);
+      });
+    });
+  }).observe(document.documentElement,{childList:true,subtree:true});
+  scan(document);
+})();
+</script>`;
+
+                // Inject the sprite + patch script right before <div id="root">
+                return html.replace(
+                    '<div id="root">',
+                    spriteContent + '\n' + patchScript + '\n<div id="root">'
+                );
+            },
+        },
+    };
+}
+
 function requireShimPlugin() {
     return {
         name: 'require-shim',
@@ -51,6 +111,7 @@ export default defineConfig({
         requireShimPlugin(),
         react(),
         rawPlugin(),
+        inlineSpritePlugin(),
     ],
     resolve: {
         dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
