@@ -16,6 +16,12 @@ import { useDevice } from '@deriv-com/ui';
 import ToolbarWidgets from './toolbar-widgets';
 import '@deriv/deriv-charts/dist/smartcharts.css';
 
+// Set absolute public path so SmartCharts' dynamic chunk imports (flutter-chart-adapter,
+// etc.) resolve from the domain root instead of relative to the current page route.
+// Icon sprite URLs that get the double-slash ("//sprite...#id") are caught and rewritten
+// to inline "#fragment" references by the MutationObserver injected via inlineSpritePlugin.
+setSmartChartsPublicPath('/');
+
 
 type TError = null | {
     error?: {
@@ -132,10 +138,21 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
         };
     }, []);
 
-    const requestAPI = (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
+    const requestAPI = async (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
         const api = getBestApi();
         if (!api) return Promise.reject(new Error('Chart API not ready'));
-        return api.send(req);
+        const response = await api.send(req);
+        // Sanitize active_symbols: filter out any entries missing required display fields
+        // to prevent SmartCharts' _categorizeActiveSymbols from crashing on undefined props.
+        if (response?.active_symbols && Array.isArray(response.active_symbols)) {
+            response.active_symbols = response.active_symbols.filter(
+                (s: Record<string, unknown>) =>
+                    s &&
+                    s.submarket_display_name !== undefined &&
+                    s.market_display_name !== undefined
+            );
+        }
+        return response;
     };
 
     const requestForgetStream = (subscription_id: string) => {
