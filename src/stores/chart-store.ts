@@ -111,17 +111,19 @@ export default class ChartStore {
 
             if (props) {
                 const { symbol, granularity, chart_type } = JSON.parse(props);
-                this.symbol = symbol || 'R_100';
+                // Migrate old retired symbol names to their current equivalents
+                const migrateSymbol = (s: string) => (s === 'R_100' ? '1HZ100V' : s === 'R_10' ? '1HZ10V' : s === 'R_25' ? '1HZ25V' : s === 'R_50' ? '1HZ50V' : s === 'R_75' ? '1HZ75V' : s || '1HZ100V');
+                this.symbol = migrateSymbol(symbol);
                 this.granularity = granularity;
                 this.chart_type = chart_type;
             } else {
-                this.symbol = 'R_100';
+                this.symbol = '1HZ100V';
                 this.granularity = 0;
                 this.chart_type = 'line';
             }
         } catch {
             LocalStore.remove('bot.chart_props');
-            this.symbol = 'R_100';
+            this.symbol = '1HZ100V';
             this.granularity = 0;
             this.chart_type = 'line';
         }

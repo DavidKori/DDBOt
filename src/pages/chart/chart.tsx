@@ -141,18 +141,44 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
     const requestAPI = async (req: ServerTimeRequest | ActiveSymbolsRequest | TradingTimesRequest) => {
         const api = getBestApi();
         if (!api) return Promise.reject(new Error('Chart API not ready'));
-        const response = await api.send(req);
-        // Sanitize active_symbols: filter out any entries missing required display fields
-        // to prevent SmartCharts' _categorizeActiveSymbols from crashing on undefined props.
-        if (response?.active_symbols && Array.isArray(response.active_symbols)) {
-            response.active_symbols = response.active_symbols.filter(
-                (s: Record<string, unknown>) =>
-                    s &&
-                    s.submarket_display_name !== undefined &&
-                    s.market_display_name !== undefined
-            );
+
+        // Deriv's active_symbols endpoint now returns 0 results without auth.
+        // Provide a hardcoded list of synthetic index symbols that work on the
+        // public WebSocket so SmartCharts can render the symbol picker and chart.
+        if ((req as ActiveSymbolsRequest).active_symbols) {
+            const fallbackSymbols = [
+                { symbol: '1HZ10V',   display_name: 'Volatility 10 (1s) Index',  market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Volatility Indices', exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: '1HZ25V',   display_name: 'Volatility 25 (1s) Index',  market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Volatility Indices', exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: '1HZ50V',   display_name: 'Volatility 50 (1s) Index',  market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Volatility Indices', exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: '1HZ75V',   display_name: 'Volatility 75 (1s) Index',  market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Volatility Indices', exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: '1HZ100V',  display_name: 'Volatility 100 (1s) Index', market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Volatility Indices', exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: 'BOOM300N', display_name: 'Boom 300 Index',            market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Crash/Boom Indices',  exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: 'BOOM500',  display_name: 'Boom 500 Index',            market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Crash/Boom Indices',  exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: 'BOOM1000', display_name: 'Boom 1000 Index',           market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Crash/Boom Indices',  exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: 'CRASH300N',display_name: 'Crash 300 Index',           market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Crash/Boom Indices',  exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: 'CRASH500', display_name: 'Crash 500 Index',           market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Crash/Boom Indices',  exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: 'CRASH1000',display_name: 'Crash 1000 Index',          market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Crash/Boom Indices',  exchange_is_open: 1, is_trading_suspended: 0, pip: '0.001',   spot: null },
+                { symbol: 'OTC_DJI',  display_name: 'Wall Street 30',            market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'otc_index',    submarket_display_name: 'OTC Indices',         exchange_is_open: 1, is_trading_suspended: 0, pip: '0.01',    spot: null },
+                { symbol: 'OTC_AS51', display_name: 'Australia 200',             market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'otc_index',    submarket_display_name: 'OTC Indices',         exchange_is_open: 1, is_trading_suspended: 0, pip: '0.01',    spot: null },
+                { symbol: 'stpRNG',   display_name: 'Step Index',                market: 'synthetic_index', market_display_name: 'Derived',    submarket: 'random_index', submarket_display_name: 'Volatility Indices', exchange_is_open: 1, is_trading_suspended: 0, pip: '0.1',     spot: null },
+            ];
+            try {
+                const response = await api.send(req);
+                const apiSymbols: unknown[] = (response?.active_symbols && Array.isArray(response.active_symbols))
+                    ? response.active_symbols.filter(
+                        (s: Record<string, unknown>) =>
+                            s && s.submarket_display_name != null && s.market_display_name != null
+                      )
+                    : [];
+                // Merge: prefer API data, fall back to hardcoded list
+                const merged = apiSymbols.length > 0 ? apiSymbols : fallbackSymbols;
+                return { ...response, active_symbols: merged, msg_type: 'active_symbols' };
+            } catch {
+                return { active_symbols: fallbackSymbols, msg_type: 'active_symbols', req_id: (req as any).req_id };
+            }
         }
-        return response;
+
+        return api.send(req);
     };
 
     const requestForgetStream = (subscription_id: string) => {
@@ -190,11 +216,14 @@ const Chart = observer(({ show_digits_stats }: { show_digits_stats: boolean }) =
                 currentSubscriberRef.current = subscriber ?? null;
             }
         } catch (e) {
-            if ((e as TError)?.error?.code === 'MarketIsClosed') callback([]);
+            const code = (e as TError)?.error?.code;
+            if (code === 'MarketIsClosed' || code === 'InvalidSymbol' || code === 'AuthorizationRequired') {
+                callback([]);
+            }
         }
     };
 
-    const display_symbol = symbol || 'R_100';
+    const display_symbol = symbol || '1HZ100V';
 
     return (
         <div

@@ -9,12 +9,8 @@ const DERIV_API_TOKEN = process.env.DERIV_API_TOKEN || '';
 const WS_URL = `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`;
 const POLL_INTERVAL_MS = 5000; // 5-second poll when no auth token
 
+// R_10/R_25/R_50/R_75/R_100 were retired by Deriv — use 1HZ* equivalents instead.
 const VOLATILITY_SYMBOLS = [
-    { symbol: 'R_10',     name: 'Volatility 10 Index' },
-    { symbol: 'R_25',     name: 'Volatility 25 Index' },
-    { symbol: 'R_50',     name: 'Volatility 50 Index' },
-    { symbol: 'R_75',     name: 'Volatility 75 Index' },
-    { symbol: 'R_100',    name: 'Volatility 100 Index' },
     { symbol: '1HZ10V',   name: 'Volatility 10 (1s) Index' },
     { symbol: '1HZ25V',   name: 'Volatility 25 (1s) Index' },
     { symbol: '1HZ50V',   name: 'Volatility 50 (1s) Index' },
