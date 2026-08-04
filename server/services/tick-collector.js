@@ -2,7 +2,12 @@ const WebSocket = require('ws');
 const mongoose = require('mongoose');
 
 const APP_ID = process.env.APP_ID || '89963';
-const WS_URL = `wss://ws.binaryws.com/websockets/v3?app_id=${APP_ID}`;
+// Optional: set DERIV_API_TOKEN in your environment to enable real-time tick
+// subscriptions.  Without it the collector falls back to polling ticks_history
+// every POLL_INTERVAL_MS milliseconds (works without authentication).
+const DERIV_API_TOKEN = process.env.DERIV_API_TOKEN || '';
+const WS_URL = `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`;
+const POLL_INTERVAL_MS = 5000; // 5-second poll when no auth token
 
 const VOLATILITY_SYMBOLS = [
     { symbol: 'R_10',     name: 'Volatility 10 Index' },
@@ -57,6 +62,7 @@ class SymbolCollector {
         this.name = name;
         this.ws = null;
         this.reconnect_timer = null;
+        this.poll_timer = null;
         this.running = false;
         this.tick_count = 0;
         this.reconnect_delay = 3000;
@@ -70,6 +76,7 @@ class SymbolCollector {
     stop() {
         this.running = false;
         if (this.reconnect_timer) clearTimeout(this.reconnect_timer);
+        if (this.poll_timer) clearTimeout(this.poll_timer);
         if (this.ws) {
             this.ws.terminate();
             this.ws = null;
@@ -88,12 +95,16 @@ class SymbolCollector {
         }
 
         this.ws.on('open', () => {
-            console.log(`[TickCollector] Subscribed → ${this.symbol} (${this.name})`);
             this.reconnect_delay = 3000;
-            this.ws.send(JSON.stringify({
-                ticks: this.symbol,
-                subscribe: 1,
-            }));
+
+            if (DERIV_API_TOKEN) {
+                // Authenticate first; the 'authorize' response handler will subscribe
+                this.ws.send(JSON.stringify({ authorize: DERIV_API_TOKEN }));
+            } else {
+                // No token: use ticks_history polling (works without auth)
+                console.log(`[TickCollector] No DERIV_API_TOKEN — polling ticks_history for ${this.symbol}`);
+                this._schedulePoll(0);
+            }
         });
 
         this.ws.on('message', async (raw) => {
@@ -102,6 +113,18 @@ class SymbolCollector {
 
                 if (msg.error) {
                     console.warn(`[TickCollector] API error (${this.symbol}): ${msg.error.message}`);
+                    // On InvalidToken / auth error, fall back to polling
+                    if (msg.msg_type === 'authorize') {
+                        console.warn(`[TickCollector] Auth failed for ${this.symbol}, falling back to polling`);
+                        this._schedulePoll(0);
+                    }
+                    return;
+                }
+
+                if (msg.msg_type === 'authorize') {
+                    // Auth succeeded — now subscribe to real-time ticks
+                    console.log(`[TickCollector] Authorized → subscribing to ${this.symbol}`);
+                    this.ws.send(JSON.stringify({ ticks: this.symbol, subscribe: 1 }));
                     return;
                 }
 
@@ -120,6 +143,26 @@ class SymbolCollector {
                     if (this.tick_count % 100 === 0) {
                         console.log(`[TickCollector] ${symbol}: ${this.tick_count} ticks stored`);
                     }
+                    return;
+                }
+
+                // ticks_history poll response
+                if (msg.msg_type === 'history' && msg.history) {
+                    const { prices, times } = msg.history;
+                    if (prices && prices.length > 0) {
+                        const latest_idx = prices.length - 1;
+                        await saveTick({
+                            symbol: this.symbol,
+                            price: prices[latest_idx],
+                            epoch: times[latest_idx],
+                            pip_size: 0,
+                            ask: prices[latest_idx],
+                            bid: prices[latest_idx],
+                        });
+                        this.tick_count++;
+                    }
+                    // Schedule next poll
+                    this._schedulePoll(POLL_INTERVAL_MS);
                 }
             } catch (err) {
                 console.error(`[TickCollector] Parse error (${this.symbol}):`, err.message);
@@ -131,11 +174,30 @@ class SymbolCollector {
         });
 
         this.ws.on('close', () => {
+            if (this.poll_timer) {
+                clearTimeout(this.poll_timer);
+                this.poll_timer = null;
+            }
             if (this.running) {
-                console.log(`[TickCollector] Disconnected (${this.symbol}), reconnecting in ${this.reconnect_delay}ms…`);
                 this._scheduleReconnect();
             }
         });
+    }
+
+    _schedulePoll(delay) {
+        if (!this.running) return;
+        if (this.poll_timer) clearTimeout(this.poll_timer);
+        this.poll_timer = setTimeout(() => this._doPoll(), delay);
+    }
+
+    _doPoll() {
+        if (!this.running || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        this.ws.send(JSON.stringify({
+            ticks_history: this.symbol,
+            count: 1,
+            end: 'latest',
+            style: 'ticks',
+        }));
     }
 
     _scheduleReconnect() {
@@ -150,6 +212,7 @@ class SymbolCollector {
             name: this.name,
             connected: this.ws?.readyState === WebSocket.OPEN,
             tick_count: this.tick_count,
+            mode: DERIV_API_TOKEN ? 'subscribe' : 'poll',
         };
     }
 }
@@ -163,7 +226,8 @@ class TickCollector {
     start() {
         if (this.started) return;
         this.started = true;
-        console.log(`[TickCollector] Starting — tracking ${VOLATILITY_SYMBOLS.length} markets (app_id=${APP_ID})`);
+        const mode = DERIV_API_TOKEN ? 'authenticated subscription' : 'unauthenticated ticks_history polling';
+        console.log(`[TickCollector] Starting — tracking ${VOLATILITY_SYMBOLS.length} markets (app_id=${APP_ID}, mode=${mode})`);
 
         VOLATILITY_SYMBOLS.forEach(({ symbol, name }) => {
             const collector = new SymbolCollector(symbol, name);

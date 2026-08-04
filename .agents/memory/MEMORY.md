@@ -1,0 +1,1 @@
+- [Deriv API auth requirement](deriv-api-auth.md) — synthetic-index ticks/active_symbols now require auth; trading_times returns OutputValidationFailed server-side.

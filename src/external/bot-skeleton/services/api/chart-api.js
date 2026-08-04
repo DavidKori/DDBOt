@@ -1,4 +1,4 @@
-import { generateDerivApiInstance } from './appId';
+import { generateDerivApiInstance, V2GetActiveToken } from './appId';
 
 class ChartAPI {
     api;
@@ -50,6 +50,24 @@ class ChartAPI {
             } else {
                 // eslint-disable-next-line no-console
                 console.warn('[chart_api] WebSocket already OPEN on init');
+            }
+
+            // Authorize the chart WebSocket with the user's token if available.
+            // Deriv API now requires auth for synthetic index tick streaming and
+            // active_symbols queries — without it those return empty / InvalidSymbol.
+            const token = V2GetActiveToken?.();
+            if (token && this.api?.connection?.readyState === 1) {
+                try {
+                    // eslint-disable-next-line no-console
+                    console.warn('[chart_api] Authorizing chart connection…');
+                    await this.api.authorize(token);
+                    // eslint-disable-next-line no-console
+                    console.warn('[chart_api] Authorization OK');
+                } catch (e) {
+                    // Non-fatal: chart will still display historical data
+                    // eslint-disable-next-line no-console
+                    console.warn('[chart_api] Authorization failed (chart may show limited data):', e?.message ?? e);
+                }
             }
 
             this.api?.connection.addEventListener('close', this._boundOnSocketClose);

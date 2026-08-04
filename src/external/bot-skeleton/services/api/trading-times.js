@@ -71,9 +71,20 @@ export default class TradingTimes {
 
     async updateTradingTimes() {
         const last_update_date = this.last_update_moment.format('YYYY-MM-DD');
-        const response = await this.ws?.send({ trading_times: last_update_date });
 
-        if (response.error) {
+        let response;
+        try {
+            response = await this.ws?.send({ trading_times: last_update_date });
+        } catch (err) {
+            // DerivAPIBasic rejects the promise when the API returns an error
+            // (e.g. OutputValidationFailed).  Treat as a graceful no-op so the
+            // rest of the symbol-loading flow can continue without trading-times data.
+            // eslint-disable-next-line no-console
+            console.warn('[TradingTimes] trading_times request failed, continuing without trading times:', err?.error?.message || err?.message || err);
+            return;
+        }
+
+        if (!response || response.error) {
             return;
         }
 

@@ -24,11 +24,22 @@ type TError = null | {
     };
 };
 
-/** Return whichever DerivAPIBasic connection is currently OPEN, or fall back to
- *  whichever is instantiated so at least requests can be queued. */
+/** Return the best available DerivAPIBasic connection for chart requests.
+ *
+ *  Deriv API now requires an authenticated connection to stream synthetic-index
+ *  ticks and to get a non-empty active_symbols response.  We therefore prefer
+ *  whichever connection is both OPEN *and* authorised; fall back to any OPEN
+ *  connection so historical data still renders for logged-out users. */
 const getBestApi = () => {
-    if (chart_api?.api?.connection?.readyState === 1) return chart_api.api;
-    if ((api_base as any)?.api?.connection?.readyState === 1) return (api_base as any).api;
+    const chartOpen  = chart_api?.api?.connection?.readyState === 1;
+    const baseOpen   = (api_base as any)?.api?.connection?.readyState === 1;
+    const baseAuthed = (api_base as any)?.is_authorized === true;
+
+    // Prefer api_base when it is both open and authorised (has synthetic index access)
+    if (baseAuthed && baseOpen) return (api_base as any).api;
+    // Fall back to chart_api (which may itself be authorised after our init patch)
+    if (chartOpen) return chart_api.api;
+    if (baseOpen)  return (api_base as any).api;
     return chart_api?.api ?? (api_base as any)?.api ?? null;
 };
 
