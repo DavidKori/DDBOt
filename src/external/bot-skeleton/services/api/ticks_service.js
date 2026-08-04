@@ -258,11 +258,14 @@ export default class TicksService {
         const { symbol, granularity, style } = options;
         const request_object = {
             ticks_history: symbol === 'na' ? 'R_100' : symbol,
+            adjust_start_time: 1,
             subscribe: 1,
             end: 'latest',
             count: 1000,
+            start: 1,
             granularity: granularity ? Number(granularity) : undefined,
             style,
+            product_type: 'basic',
         };
         return new Promise((resolve, reject) => {
             if (!api_base.api) resolve([]);
